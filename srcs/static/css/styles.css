@@ -1,0 +1,1805 @@
+/* Variables globales pour les couleurs et les thèmes */
+:root {
+    --primary-bg: #1b2838;
+    --primary-text: #b8c2cc;
+    --accent-color: #66c0f4;
+    --highlight-color: #2a9d8f;
+    --button-bg: #33415c;
+    --danger-color: #e74c3c;
+    --danger-hover-color: #c0392b;
+    --friend-action-bg: linear-gradient(135deg, #66c0f4 0%, #2a9d8f 100%);
+    --friend-action-hover-bg: linear-gradient(135deg, #7ccaff 0%, #3aa394 100%);
+    --modal-bg: linear-gradient(135deg, #1b2838 0%, #2a415c 100%);
+    --notification-bg: linear-gradient(135deg, #1b2838 0%, #2a415c 100%);
+    --notification-count-bg: #66c0f4;
+    --empty-state-color: rgba(255, 255, 255, 0.6);
+    --friend-card-bg: linear-gradient(135deg, #2a415c 0%, #1b2838 100%);
+    --friend-avatar-border: #66c0f4;
+    --friend-name-color: #fcfcec;
+    --remove-friend-color: #e74c3c;
+    --remove-friend-hover-color: #c0392b;
+    --input-border-color: rgba(255, 255, 255, 0.1);
+    --input-bg-color: rgba(255, 255, 255, 0.05);
+    --input-focus-border-color: #66c0f4;
+}
+
+[data-theme="dark"] {
+    --primary-bg: #121212;
+    --primary-text: #e0e0e0;
+    --accent-color: #80d0c7;
+    --highlight-color: #4a4a4a;
+    --button-bg: #303030;
+    --danger-color: #e53935;
+    --danger-hover-color: #d32f2f;
+    --friend-action-bg: linear-gradient(135deg, #80d0c7 0%, #1d3557 100%);
+    --friend-action-hover-bg: linear-gradient(135deg, #9de2d9 0%, #2a415c 100%);
+    --modal-bg: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+    --notification-bg: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+    --notification-count-bg: #80d0c7;
+    --empty-state-color: rgba(255, 255, 255, 0.5);
+    --friend-card-bg: linear-gradient(135deg, #1e1e1e 0%, #121212 100%);
+    --friend-avatar-border: #80d0c7;
+    --friend-name-color: #e0e0e0;
+    --remove-friend-color: #e53935;
+    --remove-friend-hover-color: #d32f2f;
+    --input-border-color: rgba(255, 255, 255, 0.1);
+    --input-bg-color: rgba(255, 255, 255, 0.05);
+    --input-focus-border-color: #80d0c7;
+}
+
+/* Styles globaux pour le corps de la page */
+body {
+    background-color: var(--primary-bg);
+    color: var(--primary-text);
+    font-family: 'Press Start 2P', cursive;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* Effet de grille en arrière-plan */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+}
+
+#app {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Styles pour la barre de navigation */
+.navbar {
+    background-color: var(--primary-bg) !important;
+    border-bottom: 2px solid var(--accent-color);
+    padding: 1rem;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1001;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-brand {
+    color: var(--accent-color) !important;
+    font-size: 1.2em;
+}
+
+.nav-link {
+    color: var(--primary-text) !important;
+    transition: all 0.3s ease;
+    font-size: 0.8em;
+    padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover, .nav-link:focus {
+    color: var(--accent-color) !important;
+    transform: scale(1.1);
+}
+
+.navbar-toggler {
+    border: 2px solid var(--accent-color);
+    padding: 0.5rem;
+}
+
+.navbar-toggler-icon {
+    background-image: none;
+    position: relative;
+}
+
+.navbar-toggler-icon::before {
+    content: '≡';
+    color: var(--accent-color);
+    font-size: 1.5em;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Styles pour le conteneur principal */
+.container {
+    max-width: 1200px;
+    padding: 2rem;
+    margin-top: 80px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+/* Styles pour les boutons */
+.btn {
+    background-color: var(--button-bg);
+    color: var(--primary-text);
+    border: none;
+    border-radius: 25px;
+    padding: 1rem 2rem;
+    font-family: 'Press Start 2P';
+    text-transform: uppercase;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+    position: relative;
+    margin: 0.5rem auto;
+}
+
+.btn:hover, .btn:focus {
+    background-color: var(--highlight-color);
+    color: var(--accent-color);
+    transform: scale(1.1);
+    outline: none;
+}
+
+.btn:focus::before {
+    content: '>';
+    position: absolute;
+    left: -20px;
+    color: var(--accent-color);
+    animation: blink 0.8s infinite;
+}
+
+.btn-custom-logout {
+    background-color: var(--danger-color) !important;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 25px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+
+.btn-custom-logout:hover, .btn-custom-logout:focus {
+    background-color: var(--danger-hover-color) !important;
+    color: #ffffff !important;
+    transform: scale(1.1);
+    outline: none;
+}
+
+/* Styles pour les champs de formulaire */
+.form-control {
+    background: var(--primary-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--primary-text);
+    border-radius: 15px;
+    padding: 0.8rem;
+    font-family: 'Press Start 2P';
+    font-size: 0.8em;
+}
+
+/* Styles pour les cartes */
+.card {
+    background: var(--primary-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 15px;
+    padding: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    min-width: 200px;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+.card-title {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+    word-wrap: break-word;
+}
+
+.card-text {
+    color: var(--primary-text);
+}
+
+/* Styles pour les modals */
+.modal-content {
+    background-color: var(--primary-bg);
+    border: 2px solid var(--accent-color);
+}
+
+.modal-header, .modal-footer {
+    border-color: var(--accent-color);
+}
+
+/* Styles pour les liens de déconnexion */
+#logout-link {
+    color: var(--danger-color) !important;
+}
+
+#logout-link:hover {
+    color: var(--danger-hover-color) !important;
+}
+
+/* Styles pour la section de profil */
+.profile-header {
+    background: linear-gradient(to right, #1b2838, #2a475e);
+    padding: 30px;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.profile-avatar {
+    width: 150px;
+    height: auto;
+    border: 3px solid var(--accent-color);
+    border-radius: 5px;
+    object-fit: cover;
+}
+
+.profile-info h1 {
+    margin: 0;
+    color: var(--accent-color);
+}
+
+.profile-info p {
+    margin: 5px 0;
+}
+
+.profile-section {
+    background-color: var(--button-bg);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.profile-section h2 {
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 10px;
+    color: var(--accent-color);
+}
+
+.level-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: var(--highlight-color);
+    color: var(--accent-color);
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.progress {
+    background-color: var(--primary-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    background-color: var(--accent-color);
+    border-radius: 15px;
+    text-align: center;
+    color: var(--primary-bg);
+    font-weight: bold;
+    transition: width 0.3s ease;
+}
+
+/* Styles pour la section de connexion */
+.login-section {
+    background-color: var(--button-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 20px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.login-section h2 {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.login-section form {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-section label {
+    color: var(--primary-text);
+    margin-bottom: 0.5rem;
+}
+
+.login-section input {
+    background-color: var(--primary-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--primary-text);
+    border-radius: 5px;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
+}
+
+.login-section button {
+    background-color: var(--primary-bg);
+    color: var(--primary-text);
+    border: none;
+    border-radius: 25px;
+    padding: 1rem 2rem;
+    font-family: 'Press Start 2P', cursive;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.login-section button:hover, .login-section button:focus {
+    background-color: var(--highlight-color);
+    color: var(--accent-color);
+    transform: scale(1.1);
+    outline: none;
+}
+
+.login-section p {
+    color: var(--primary-text);
+    margin-top: 1rem;
+}
+
+.login-section a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.login-section a:hover {
+    color: var(--highlight-color);
+}
+
+/* Styles pour la section d'inscription */
+.signup-section {
+    background-color: var(--button-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 20px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.signup-section h2 {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.signup-section form {
+    display: flex;
+    flex-direction: column;
+}
+
+.signup-section label {
+    color: var(--primary-text);
+    margin-bottom: 0.5rem;
+}
+
+.signup-section input {
+    background-color: var(--primary-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--primary-text);
+    border-radius: 5px;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1rem;
+}
+
+.signup-section button {
+    background-color: var(--primary-bg);
+    color: var (--primary-text);
+    border: none;
+    border-radius: 25px;
+    padding: 1rem 2rem;
+    font-family: 'Press Start 2P', cursive;
+    text-transform: uppercase;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.signup-section button:hover, .signup-section button:focus {
+    background-color: var(--highlight-color);
+    color: var(--accent-color);
+    transform: scale(1.1);
+    outline: none;
+}
+
+.signup-section p {
+    color: var(--primary-text);
+    margin-top: 1rem;
+}
+
+.signup-section a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.signup-section a:hover {
+    color: var(--highlight-color);
+}
+
+/* Styles pour la section de succès */
+.success-section {
+    background-color: var(--button-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 20px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.success-section h2 {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.success-section p {
+    color: var(--primary-text);
+    margin-top: 1rem;
+}
+
+/* Styles pour le wrapper de profil */
+.profile-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-background {
+    background: var(--button-bg);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.profile-summary {
+    display: flex;
+    gap: 20px;
+}
+
+.avatar-section {
+    position: relative;
+}
+
+.online-status {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #4CAF50;
+    border: 2px solid white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.online-text {
+    display: none;
+    font-size: 0.5em;
+    color: white;
+    white-space: nowrap;
+    padding: 0 5px;
+}
+
+.online-status:hover {
+    width: auto;
+    height: auto;
+    padding: 5px 10px;
+    border-radius: 15px;
+    transform: translateX(-50%) scale(1.1);
+}
+
+.online-status:hover .online-text {
+    display: inline-block;
+}
+
+.profile-details {
+    flex-grow: 1;
+}
+
+.player-level {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.level-icon {
+    background: var(--accent-color);
+    color: var(--primary-bg);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.level-progress {
+    flex-grow: 1;
+    max-width: 300px;
+}
+
+.profile-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-card {
+    background: var(--button-bg);
+    border-radius: 5px;
+    padding: 15px;
+}
+
+.profile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--button-bg);
+    border: none;
+    color: var(--primary-text);
+    text-decoration: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.profile-link.danger {
+    background: var(--danger-color);
+}
+
+.custom-change-password-btn {
+    background-color: var(--primary-bg);
+}
+
+.custom-apply-btn {
+    background-color: var(--button-bg);
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stats-showcase {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: var(--button-bg);
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+}
+
+.achievements {
+    background: var(--button-bg);
+    border-radius: 5px;
+    padding: 20px;
+}
+
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.achievement {
+    background: var(--primary-bg);
+    padding: 15px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.friends-section {
+    background: var(--modal-bg);
+    border-radius: 5px;
+    padding: 20px;
+}
+
+.friends-section p {
+    color: var(--accent-color);
+}
+
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.friend {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.friend-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.friend-name {
+    font-size: 1.2em;
+    color: var(--primary-text);
+}
+
+.friends-count {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.color-picker-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--primary-bg);
+    padding: 20px;
+    border: 2px solid var(--accent-color);
+    border-radius: 10px;
+    z-index: 1000;
+    display: none;
+}
+
+.color-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-input {
+    width: 100px;
+    height: 40px;
+    border: none;
+    border-radius: 5px;
+    background: none;
+    cursor: pointer;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.preview-gradient {
+    height: 50px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 5px;
+}
+
+.signup-section input[type="file"] {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+}
+
+.settings-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.settings-section {
+    margin-bottom: 20px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.settings-section h3 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.settings-section .profile-link {
+    display: block;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: #2a475e;
+    transition: color 0.3s ease;
+}
+
+.settings-section .profile-link:hover {
+    color: #1b2838;
+}
+
+.settings-section .profile-link i {
+    margin-right: 10px;
+}
+
+#submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Styles pour les messages de données manquantes */
+.no-data-message {
+    color: var(--accent-color);
+    font-size: 1em;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.data {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #2a475e;
+    color: #fcfcec;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+    font-size: 0.9rem;
+    min-width: 32px;
+    height: 32px;
+    text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .profile-content {
+        grid-template-columns: 1fr;
+    }
+
+    .container {
+        padding: 1rem;
+        margin-top: 60px;
+    }
+
+    .btn {
+        padding: 0.8rem 1.5rem;
+        font-size: 0.7em;
+    }
+}
+
+/* Animation */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.friend-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.friend-modal-content {
+    background: var(--modal-bg);
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.friend-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.friend-modal-header h3 {
+    color: #fcfcec;
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.notification-center {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 300px;
+    background: var(--notification-bg);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    overflow: hidden;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+}
+
+.notification-center.show {
+    transform: translateX(0);
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notification-count {
+    background: var(--notification-count-bg);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+.notification-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.notification-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.friend-card {
+    background: var(--friend-card-bg);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.friend-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.friend-avatar img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--friend-avatar-border);
+}
+
+.friend-info {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.friend-name {
+    font-weight: 600;
+    color: var(--friend-name-color);
+}
+
+.remove-friend-btn {
+    background: none;
+    border: none;
+    color: var(--remove-friend-color);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    padding: 5px;
+}
+
+.remove-friend-btn:hover {
+    color: var(--remove-friend-hover-color);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--empty-state-color);
+}
+
+.empty-state i {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.friend-action-btn {
+    background: var(--friend-action-bg);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 192, 244, 0.2);
+    cursor: pointer;
+}
+
+.friend-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 192, 244, 0.3);
+    background: var(--friend-action-hover-bg);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: #fcfcec;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.3s ease;
+}
+
+.close-button:hover {
+    color: var(--remove-friend-color);
+}
+
+.friend-input-group {
+    margin-bottom: 20px;
+}
+
+.friend-input-group label {
+    display: block;
+    color: #fcfcec;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+.friend-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--input-border-color);
+    background: var(--input-bg-color);
+    border-radius: 5px;
+    color: #fcfcec;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+.friend-input:focus {
+    outline: none;
+    border-color: var(--input-focus-border-color);
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.add-friend-btn, .cancel-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.add-friend-btn {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.cancel-btn {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.add-friend-btn:hover, .cancel-btn:hover {
+    transform: translateY(-2px);
+}
+
+.add-friend-btn:active, .cancel-btn:active {
+    transform: translateY(0);
+}
+
+/* Style pour le bouton Add Friend */
+#addFriendButton {
+    background: var(--friend-action-bg);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 192, 244, 0.2);
+    cursor: pointer;
+    width: fit-content;
+    margin: 15px auto;
+}
+
+#addFriendButton i {
+    font-size: 1.2rem;
+}
+
+#addFriendButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 192, 244, 0.3);
+    background: var(--friend-action-hover-bg);
+}
+
+#addFriendButton:active {
+    transform: translateY(0);
+}
+
+.profile-background {
+    background: var(--button-bg);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.profile-header {
+    background: var(--modal-bg);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.avatar-section {
+    position: relative;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--accent-color);
+    object-fit: cover;
+}
+
+.online-status {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #4CAF50;
+    border: 2px solid var(--highlight-color);
+}
+
+.player-level {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.level-icon {
+    background: var(--accent-color);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.level-progress {
+    flex-grow: 1;
+    max-width: 200px;
+}
+
+.progress {
+    height: 10px;
+    background: var(--input-bg-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+.profile-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+}
+
+.sidebar {
+    background: var(--modal-bg);
+    border-radius: 15px;
+    padding: 20px;
+    height: fit-content;
+}
+
+.profile-card {
+    margin-bottom: 20px;
+}
+
+.recent-activity h3 {
+    color: var(--accent-color);
+    margin-bottom: 15px;
+}
+
+.profile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--input-bg-color);
+    color: var(--primary-text);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.profile-link:hover {
+    background: rgba(102, 192, 244, 0.2);
+    transform: translateY(-2px);
+}
+
+.profile-link.danger {
+    background: rgba(255, 77, 77, 0.1);
+    color: var(--danger-color);
+}
+
+.profile-link.danger:hover {
+    background: rgba(255, 77, 77, 0.2);
+}
+
+.stats-showcase {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--modal-bg);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.achievements {
+    background: var(--modal-bg);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.achievement {
+    background: var(--input-bg-color);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.3s ease;
+}
+
+.achievement:hover {
+    transform: translateY(-2px);
+    background: rgba(102, 192, 244, 0.2);
+}
+
+.data {
+    color: var(--accent-color);
+}
+
+.password-change-section {
+    background-color: var(--button-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 20px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.password-change-section h2 {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    color: var(--danger-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .profile-content {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-summary {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .player-level {
+        justify-content: center;
+    }
+}
+
+/* Effet de transition de fond de couleur et ombre sur les boutons */
+.animated-btn {
+    position: relative;
+    overflow: hidden;
+    transition: background-color 0.3s, transform 0.2s ease-in-out;
+}
+
+.animated-btn:hover {
+    transform: scale(1.1); /* Agrandissement léger au survol */
+    background-color: #0056b3; /* Couleur de fond différente au survol */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Ombre portée */
+}
+
+/* Effet de pulsation lors du survol */
+.animated-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 300%;
+    height: 300%;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.animated-btn:hover::after {
+    opacity: 1;
+}
+/**/
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+}
+
+.fade-out {
+    opacity: 1;
+    animation: fadeOut 0.3s forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#page-loader {
+    transition: opacity 0.3s ease-in-out;
+}
+
+#page-loader.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #ccc;
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+#main-content {
+    transition: opacity 0.3s ease-in-out;
+}
+
+#main-content.fade-out {
+    opacity: 0;
+}
+
+#main-content.fade-in {
+    opacity: 1;
+}
+
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+/**/
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/** Pong  **/
+
+/* Styles spécifiques au jeu Pong */
+#game {
+    display: none;
+    text-align: center;
+}
+
+canvas {
+    border: 2px solid var(--accent-color);
+    background-color: var(--primary-bg);
+    box-shadow: 0px  var(--highlight-color);/* Glow effet */
+    transition: opacity 0.5s ease-in-out, transform 0.3s ease-in-out;
+}
+/* Boutons du menu */
+.insertCoin,
+#menu button,
+#menuMode button,
+#menuDifficulty button {
+    background-color: var(--button-bg);
+    color: var(--primary-text);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 20px;
+    border-radius: 10px;
+    outline: none;
+    border: none;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+.insertCoin:hover,
+#menu button:hover,
+#menuMode button:hover,
+#menuDifficulty button:hover {
+    background-color: var(--highlight-color);
+    color: var (--accent-color);
+    transform: scale(1.1);
+}
+
+.insertCoin:focus,
+#menu button:focus,
+#menuMode button:focus,
+#menuDifficulty button:focus {
+    background-color: var(--highlight-color);
+    color: var(--accent-color);
+}
+
+/* Menus */
+#menu,
+#menuMode,
+#menuDifficulty {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    background-color: var(--modal-bg);
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 400px;
+    text-align: center;
+}
+
+#menu ul,
+#menuMode ul,
+#menuDifficulty ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#menu li,
+#menuMode li,
+#menuDifficulty li {
+    margin: 15px 0;
+}
+
+/* Instructions bien placées sous le menu */
+.controlMenu {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    color: var(--primary-text);
+    text-align: center;
+    width: 100%;
+}
+
+/* Assurer qu'elles ne chevauchent pas les menus */
+#menu + .controlMenu,
+#menuMode + .controlMenu,
+#menuDifficulty + .controlMenu {
+    margin-top: 20px;
+}
+
+
+/* Statistiques */
+#gameStats {
+    position: absolute;
+    top: 15%;
+    left: 20%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: var(--friend-card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+/* Assurer un bon espacement avec le menu */
+#menu + #gameStats,
+#menuMode + #gameStats,
+#menuDifficulty + #gameStats {
+    margin-top: 30px;
+}
+
+
+#gameStats h2 {
+    color: var(--accent-color);
+    text-align: center;
+}
+
+#gameStats p {
+    text-align: center;
+}
+
+/* Assurer un bon espacement avec le menu */
+#menu + #gameStats,
+#menuMode + #gameStats,
+#menuDifficulty + #gameStats {
+    margin-top: 30px;
+}
+
+
+#gameStats h2 {
+    color: var(--accent-color);
+    text-align: center;
+}
+
+#gameStats p {
+    text-align: center;
+}
+
+/* Animations */
+@keyframes clignote {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Correction pour le positionnement des menus et bulles d'info */
+#menu, 
+#menuMode, 
+#menuDifficulty,
+#menuInfo,
+.infoBubble {
+    position: fixed;  /* Utiliser fixed au lieu de absolute */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;  /* Assurer que les menus sont au-dessus des autres éléments */
+    width: 80%;
+    max-width: 400px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow: auto;  /* Permettre le défilement si nécessaire */
+    max-height: 80vh;  /* Limiter la hauteur pour les écrans plus petits */
+}
+
+/* Style pour la bulle d'info */
+#menuInfo,
+.infoBubble {
+    background-color: var(--modal-bg);
+    color: var(--primary-text);
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.titlePong {
+	height: auto;
+};
+
+/* Positionnement du bouton "Insert Coin" */
+.insertCoin,
+#menuLink {
+    position: fixed;  /* Utiliser fixed pour un positionnement global */
+    bottom: 350px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 900;  /* Juste en-dessous des menus */
+    margin: 0 auto;
+    width: auto;
+    max-width: 90%;
+    box-sizing: border-box;
+}
+
+/* Instructions */
+.controlMenu,
+#firstInstruct,
+#secondInstruct {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 800;
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+    color: var(--primary-text);
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* Assurer que le canvas et son conteneur sont bien dimensionnés */
+#gameCanvas,
+#backgroundCanvas {
+    display: block;  /* Éviter les espaces blancs autour du canvas */
+    margin: 0 auto;  /* Centrer horizontalement */
+    max-width: 100%;  /* Limiter la largeur maximale */
+    max-height: 80vh;  /* Limiter la hauteur maximale */
+}
+
+/* Conteneur du jeu */
+#pong {
+    position: relative;
+    width: 100%;
+    height: 100vh;  /* Utiliser toute la hauteur de l'écran */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;  /* Éviter les débordements */
+    padding: 20px 0 80px; /* Ajouter du padding en bas pour laisser de la place aux boutons */
+}
+
+/* Statistiques */
+#gameStats {
+    position: fixed;
+    bottom: 70px;  /* Position fixe depuis le bas */
+    left: 350px;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: var (--friend-card-bg);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 700;  /* En dessous des menus et instructions */
+}
+
+@media (max-width: 768px) {
+    .insertCoin,
+    #menuLink {
+        bottom: 40px;
+        font-size: 16px;
+        padding: 8px 16px;
+    }
+}
+
+/* Style amélioré pour les menus et info-bulles */
+#menu, 
+#menuMode, 
+#menuDifficulty,
+#menuInfo,
+.infoBubble {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 400px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow: auto;
+    max-height: 80vh;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Adapter la taille de la police pour les petits écrans */
+@media (max-width: 576px) {
+    #menu button,
+    #menuMode button,
+    #menuDifficulty button,
+    .insertCoin {
+        font-size: 16px;
+        padding: 8px 15px;
+    }
+    
+    .controlMenu,
+    #firstInstruct,
+    #secondInstruct {
+        font-size: 0.8rem;
+    }
+    
+    #gameStats {
+        bottom: 120px; /* Augmenter la distance du bas pour les petits écrans */
+    }
+}

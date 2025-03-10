@@ -1,0 +1,77 @@
+{
+    "nav": {
+        "home": "Accueil",
+        "pong": "Pong",
+        "pong_improved": "Pong Amélioré",
+        "bomberman": "Bomberman",
+        "login": "Connexion",
+        "logout": "Déconnexion",
+        "language": "EN/FR",
+        "signup": "S'inscrire"
+    },
+    "login": {
+        "title": "Connexion",
+        "username": "Nom d'utilisateur",
+        "password": "Mot de passe",
+        "submit": "Se connecter",
+        "no_account": "Pas de compte ?",
+        "signup_link": "Inscrivez-vous ici",
+        "connect_42": "Se connecter avec 42 :",
+        "connect_here": "Connectez-vous ici !"
+    },
+    "signup": {
+        "title": "Inscription",
+        "username": "Nom d'utilisateur",
+        "email": "Email",
+        "profile_photo": "Photo de profil",
+        "first_name": "Prénom",
+        "last_name": "Nom",
+        "password": "Mot de passe",
+        "confirm_password": "Confirmer le mot de passe",
+        "submit": "S'inscrire",
+        "have_account": "Déjà un compte ?",
+        "login_link": "Connectez-vous ici"
+    },
+    "profile": {
+        "notifications": "Notifications",
+        "recent_activity": "Activité récente",
+        "last_played": "Dernier jeu",
+        "time_played": "Temps joué",
+        "customize_colors": "Personnaliser les couleurs",
+        "change_password": "Changer le mot de passe",
+        "games_played": "Parties jouées",
+        "win_rate": "Taux de victoire",
+        "total_score": "Score total",
+        "recent_achievements": "Succès récents",
+        "my_friends": "Mes amis",
+        "start_color": "Couleur de départ :",
+        "end_color": "Couleur de fin :",
+        "apply": "Appliquer",
+        "cancel": "Annuler"
+    },
+    "password_change": {
+    "title": "Modifier le mot de passe",
+    "old_password": "Ancien mot de passe",
+    "new_password": "Nouveau mot de passe",
+    "confirm_password": "Confirmer le mot de passe",
+    "submit": "Modifier le mot de passe",
+    "old_placeholder": "Entrez votre mot de passe actuel",
+    "new_placeholder": "Entrez un nouveau mot de passe",
+    "confirm_placeholder": "Confirmez le nouveau mot de passe",
+    "success": {
+      "title": "Mot de passe modifié avec succès",
+      "message": "Votre mot de passe a été mis à jour avec succès.",
+      "return_link": "Retour au profil"
+    }
+  },
+    "home": {
+    "welcome": "Bienvenue",
+    "games_played": "Vous avez joué à",
+    "games_achieved": "parties avec un taux de victoire de",
+    "view_profile": "Voir votre profil",
+    "featured_games": "Jeux populaires",
+    "play_now": "Jouer maintenant",
+    "recent_activity": "Activité récente",
+    "login_prompt": "Connectez-vous pour accéder à toutes les fonctionnalités"
+  }
+}

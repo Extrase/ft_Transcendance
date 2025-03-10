@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+    <!-- Section Hero (Bannière d'accueil) -->
+    <!-- <div class="jumbotron text-center bg-dark text-white py-5">
+        <h1 class="display-4">Welcome to Our Gaming Platform</h1>
+        <p class="lead">Explore the latest games, connect with friends, and track your progress.</p>
+        {% if not user.is_authenticated %}
+            <div class="mt-4">
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg mr-2">Log In</a>
+                <a href="{% url 'accounts:signup' %}" class="btn btn-secondary btn-lg">Sign Up</a>
+            </div>
+        {% endif %}
+    </div> -->
+
+    <!-- Section Utilisateur Connecté -->
+    {% if user.is_authenticated %}
+        <div class="user-info card mb-4 shadow">
+            <div class="card-body text-center">
+                <h2 class="card-title">Welcome, {{ user.username }}!</h2>
+                <p class="card-text">
+                    You have played <strong>{{ user_profile.games_played }}</strong> games and achieved a win rate of <strong>{{ user_profile.win_rate }}%</strong>.
+                </p>
+                <a href="{% url 'accounts:profile' %}" class="btn btn-primary">View Your Profile</a>
+            </div>
+        </div>
+
+        <!-- Section Jeux Populaires -->
+        <div class="featured-games card mb-4 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Featured Games</h2>
+                <div class="row">
+                    <!-- Jeu 1 -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <img src="{% static 'images/game1.jpg' %}" class="card-img-top" alt="Game 1">
+                            <div class="card-body">
+                                <h5 class="card-title">Game 1</h5>
+                                <p class="card-text">Description of Game 1. A fun and challenging game for all players.</p>
+                                <a href="{% url 'game1' %}" class="btn btn-primary">Play Now</a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Jeu 2 -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <img src="{% static 'images/game2.jpg' %}" class="card-img-top" alt="Game 2">
+                            <div class="card-body">
+                                <h5 class="card-title">Game 2</h5>
+                                <p class="card-text">Description of Game 2. A strategic game to test your skills.</p>
+                                <a href="{% url 'game2' %}" class="btn btn-primary">Play Now</a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Jeu 3 -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <img src="{% static 'images/game3.jpg' %}" class="card-img-top" alt="Game 3">
+                            <div class="card-body">
+                                <h5 class="card-title">Game 3</h5>
+                                <p class="card-text">Description of Game 3. A fast-paced game for competitive players.</p>
+                                <a href="{% url 'game3' %}" class="btn btn-primary">Play Now</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Activité Récente -->
+        <div class="recent-activity card mb-4 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Recent Activity</h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">User1 achieved a new high score in Game 1.</li>
+                    <li class="list-group-item">User2 completed all levels in Game 2.</li>
+                    <li class="list-group-item">User3 joined the platform.</li>
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

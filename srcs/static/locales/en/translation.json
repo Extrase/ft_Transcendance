@@ -1,0 +1,77 @@
+{
+    "nav": {
+        "home": "Home",
+        "pong": "Pong",
+        "pong_improved": "Improved Pong",
+        "bomberman": "Bomberman",
+        "login": "Login",
+        "logout": "Logout",
+        "language": "FR/EN",
+        "signup": "Signup"
+    },
+    "login": {
+        "title": "Log In",
+        "username": "Username",
+        "password": "Password",
+        "submit": "Login",
+        "no_account": "Don't have an account?",
+        "signup_link": "Sign up here",
+        "connect_42": "Connect with 42:",
+        "connect_here": "Connect Here!"
+    },
+    "signup": {
+        "title": "Sign Up",
+        "username": "Username",
+        "email": "Email",
+        "profile_photo": "Profile Photo",
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "password": "Password",
+        "confirm_password": "Confirm Password",
+        "submit": "Sign Up",
+        "have_account": "Already have an account?",
+        "login_link": "Log in here"
+    },
+    "profile": {
+        "notifications": "Notifications",
+        "recent_activity": "Recent Activity",
+        "last_played": "Last played",
+        "time_played": "Time played",
+        "customize_colors": "Customize Profile Colors",
+        "change_password": "Change Password",
+        "games_played": "Games Played",
+        "win_rate": "Win Rate",
+        "total_score": "Total Score",
+        "recent_achievements": "Recent Achievements",
+        "my_friends": "My Friends",
+        "start_color": "Start Color:",
+        "end_color": "End Color:",
+        "apply": "Apply",
+        "cancel": "Cancel"
+    },
+    "password_change": {
+    "title": "Change Password",
+    "old_password": "Old Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm New Password",
+    "submit": "Change Password",
+    "old_placeholder": "Enter your current password",
+    "new_placeholder": "Enter a new password",
+    "confirm_placeholder": "Confirm new password",
+    "success": {
+      "title": "Password Changed Successfully",
+      "message": "Your password has been updated successfully.",
+      "return_link": "Return to Profile"
+    }
+  },
+    "home": {
+    "welcome": "Welcome",
+    "games_played": "You have played",
+    "games_achieved": "games and achieved a win rate of",
+    "view_profile": "View Your Profile",
+    "featured_games": "Featured Games",
+    "play_now": "Play Now",
+    "recent_activity": "Recent Activity",
+    "login_prompt": "Please log in to access all features"
+  }
+}

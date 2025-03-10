@@ -1,0 +1,325 @@
+
+body {
+	background-color: #262324;
+	color: #fcfcec;
+	font-family: 'Press Start 2P', cursive;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	overflow: hidden; /* No Scroll */
+	margin: 0;
+	padding: 0;
+	height: 100%;
+  width: 100%;
+}
+
+h1 {
+	font-size: 5rem;
+}
+
+button {
+	background-color: #262324;
+	color: #fcfcec;
+	font-family: 'Press Start 2P', cursive;
+	font-size: 35px;
+	border-radius: 1rem;
+	outline: none;
+	border: none;
+}
+
+button:focus {
+	color: #fdd900;
+	outline: auto;
+	background-color: #fcfcec;
+	animation: clignoteBackgroundButton 0.8s infinite;
+	transform: scale(1.2, 1.2);
+}
+
+
+button:hover {
+	color: #fdd900;
+	border-radius: 1rem;
+	outline: auto; 
+	transform: scale(1.2, 1.2);
+}
+
+button:disabled {
+	background-color: #666;
+	color: #888;
+	cursor: not-allowed;
+}
+
+#menu {
+	display: none;
+	font-size: 35px;
+	background-color: #262324;
+	justify-content: center;
+	align-items: center;
+}
+
+#menu ul {
+	list-style: none;
+	padding: 0;
+}
+
+#menu li {
+	margin: 20px 0;
+}
+
+#menu button {
+	padding: 1rem;
+}
+
+#menu button:disabled {
+	pointer-events: none; /* Empêche l'interaction (événements de clic, de focus, etc.) */
+}
+
+#menu p {
+	position: fixed;
+	bottom: 1rem;
+	margin: 5px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.insertCoin {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 20vh;
+	color: #fcfcec;
+	background-color: transparent;
+	font-size: 2.5rem;
+	animation: clignote 1s infinite;
+	outline: none;
+	border: none;
+}
+
+.insertCoin:hover,
+.insertCoin:focus {
+	outline: none;
+	border: none;
+	background-color: transparent;
+}
+
+.controlMenu {
+	position: fixed;
+	font-size: 1rem;
+	bottom: 1rem;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+
+/* Info Bubble (popup) */
+#menuInfo {
+	display: none; /* Commence caché */
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background-color: rgba(0, 0, 0, 0.8); /* Légèrement plus sombre pour mieux contraster avec le texte */
+	color: #fcfcec;
+	padding: 20px;
+	border-radius: 8px;
+	width: 300px;
+	z-index: 10;
+	text-align: center;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Ombre pour donner un effet de profondeur */
+}
+
+#menuInfo p {
+	margin: 0 0 20px 0; /* Espacement entre les paragraphes */
+}
+
+#menuInfo button {
+	margin-top: 20px;
+	padding: 1rem;
+	background-color: #fdd900;
+	color: #262324;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 18px;
+}
+
+
+ #menuInfo button:hover, #menuInfo button:focus {
+	background-color: #fdd900;
+	animation: clignoteBackgroundButtonInf 0.8s infinite;
+}
+
+#menuInfo ul {
+	list-style: none;
+	padding: 0;
+}
+
+#menuInfo li {
+	margin: 5px 0;
+}
+
+/* Voir comment regler pb css*/
+/* #moreBubble button:hover, #moreBubble button:focus {
+	background-color: #fdd900;
+	animation: clignoteBackgroundButtonInf 0.8s infinite;
+}
+
+#closeBubble button:hover, #closeBubble button:focus {
+	background-color: #e74c3c;
+	animation: clignoteBackgroundButtonCl 0.8s infinite;
+} */
+
+#menuMode {
+	display: none;
+	font-size: 35px;
+	background-color: #262324;
+	justify-content: center;
+	align-items: center;
+}
+
+#menuMode ul {
+	list-style: none;
+	padding: 0;
+}
+
+#menuMode li {
+	margin: 20px 0;
+}
+
+#menuMode button {
+	padding: 1rem;
+}
+
+#menuMode button:disabled {
+	pointer-events: none; /* Empêche l'interaction (événements de clic, de focus, etc.) */
+}
+
+#menuMode p {
+	position: fixed;
+	bottom: 1rem;
+	margin: 5px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+#menuDifficulty {
+	display: none;
+	font-size: 35px;
+	background-color: #262324;
+	justify-content: center;
+	align-items: center
+}
+
+#menuDifficulty ul {
+	list-style: none;
+	padding: 0;
+}
+
+#menuDifficulty li {
+	margin: 20px 0;
+}
+
+#menuDifficulty button {
+	padding: 1rem;
+}
+
+#menuDifficulty button:disabled {
+	pointer-events: none; /* Empêche l'interaction (événements de clic, de focus, etc.) */
+}
+
+#menuDifficulty p {
+	position: fixed;
+	bottom: 1rem;
+	margin: 5px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+#esButton:hover, #esButton:focus {
+	background-color: #4CAF50;
+	animation: clignoteBackgroundButtonEs 0.8s infinite;
+}
+
+#mdButton:hover, #mdButton:focus {
+	background-color: #FFF3A0;
+	animation: clignoteBackgroundButtonMd 0.8s infinite;
+}
+
+#hdButton:hover, #hdButton:focus {
+	background-color:#F44336;
+	animation: clignoteBackgroundButtonHd 0.8s infinite;
+}
+
+#sButton:disabled, #sButton:hover, #sButton:focus, #muButton:disabled, #muButton:hover, #muButton:focus  {
+	background-color: #666;
+	color: #888;
+	cursor: not-allowed;
+	animation: clignoteBackgroundButtonD 0.8s infinite;
+}
+
+#game {
+	display: none;
+}
+
+canvas {
+	border: 2px solid #fcfcec;
+}
+
+@keyframes clignote {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0; }
+}
+
+
+/* Animation uniquement sur le fond */
+/*Si pas trouver solution faire une fct par couleur*/
+@keyframes clignoteBackground {
+  0%, 100% { background-color: inherit; }
+
+  50% { background-color: #26232400; }    
+}
+
+
+@keyframes clignoteBackgroundButton {
+  0%, 100% { background-color: #fcfcec; }
+
+  50% { background-color: #26232400; }    
+}
+
+@keyframes clignoteBackgroundButtonD {
+  0%, 100% { background-color: #666; }
+	
+  50% { background-color: #26232400; }    
+}
+
+@keyframes clignoteBackgroundButtonEs {
+  0%, 100% { background-color: #4CAF50; }
+	
+  50% { background-color: #26232400; }    
+}
+
+@keyframes clignoteBackgroundButtonMd {
+  0%, 100% { background-color: #FFF3A0; }
+	
+  50% { background-color: #26232400; }    
+}
+
+@keyframes clignoteBackgroundButtonHd {
+  0%, 100% { background-color: #F44336; }
+	
+  50% { background-color: #26232400; }    
+}
+
+@keyframes clignoteBackgroundButtonCl {
+  0%, 100% { background-color: #e74c3c; }
+	
+  50% { background-color: #26232400; }    
+}
+
+@keyframes clignoteBackgroundButtonInf {
+  0%, 100% { background-color: #fdd900; }
+	
+  50% { background-color: #eee090; }    
+}
