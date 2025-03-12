@@ -1,8 +1,8 @@
-
+import { bombover } from "./spa.js";
 // ----------------------------------------------------
 // Déclaration des éléments DOM utilisés dans le script
 // ----------------------------------------------------
-
+export function init(){
 const firstInstruct = document.getElementById("firstInstruct");
 const secondInstruct = document.getElementById("secondInstruct");
 const menuLink = document.getElementById("menuLink");
@@ -21,7 +21,6 @@ const moreBubble = document.getElementById("moreBubble");
 const modeItems = document.querySelectorAll("#menuMode .button");
 const menuMode = document.getElementById("menuMode");
 const singleButton = document.getElementById("siButton");
-const multiButton = document.getElementById("muButton");
 const quitMButton = document.getElementById("qmButton");
 
 const difficultyItems = document.querySelectorAll("#menuDifficulty .button");
@@ -31,14 +30,10 @@ const mediumButton = document.getElementById("mdButton");
 const hardMButton = document.getElementById("hdButton");
 const quitDMButton = document.getElementById("qdButton");
 
-const startMenu = document.getElementById("menuStart");
-const startButton = document.getElementById("staButton");
-const quitStButton = document.getElementById("qsButton");
-
 const title = document.getElementById("title");
 const pong = document.getElementById("game");
-const MAX_BALL_SPEED = 8; // Vitesse maximale autorisée
 
+let anim;
 
 let currentFocus = 0;
 let bubbleFocus = 0;
@@ -195,18 +190,16 @@ function playGame() {
 // Gestion des événements
 // ----------------------------------------------------
 
-/**
- * Ouvre/ferme le menu lorsque l'on clique sur "INSERT COIN"
- */
-menuLink.addEventListener("click", function(event) {
+function handleMenuLinkClick(event) {
     event.preventDefault();
     toggleMenu();
-});
+}
+menuLink.addEventListener("click", handleMenuLinkClick);
 
 /**
  * Fermeture de l'info-bulle en cliquant sur "Close"
  */
-closeBubble.addEventListener("click", function() {
+function handleCloseBubble() {
     enableMenu();
     infoBubble.style.display = 'none';
     infoButton.focus();
@@ -216,78 +209,80 @@ closeBubble.addEventListener("click", function() {
     if (textInterval) {
         clearInterval(textInterval);
     }
-});
+};
+closeBubble.addEventListener("click", handleCloseBubble);
 
-quitButton.addEventListener("click", function() {
+function handleQuitButton() {
     selectMenu(menuLink, menu, null, null);
-})
-
-// Modifiez le gestionnaire d'événements global
-window.addEventListener('keydown', (event) => {
-    if (isGameOver) {
-        if (event.key === ' ') { // Espace pour rejouer
-            initializeGame();
-        } else if (event.key === 'q') { // Q pour quitter
-            selectMenu(menu, pong, currentFocus, menuItems);
-            title.style.display = 'block';
-            isGameOver = false;
-        }
-    }
-});
+}
+quitButton.addEventListener("click", handleQuitButton);
 
 /**
  * Ouverture de l'info-bulle en cliquant sur "INFO"
  */
-infoButton.addEventListener("click", function() {
+function handleInfoButton() {
     toggleInfoBubble();
-});
+};
+infoButton.addEventListener("click", handleInfoButton);
 
 /**
  * Action pour "More Info"
  */
-moreBubble.addEventListener("click", function () {
+function handleMoreBubble() {
     window.open("https://fr.wikipedia.org/wiki/Bomberman", "_blank");
-});
+};
+moreBubble.addEventListener("click", handleMoreBubble);
 
-moreBubble.addEventListener("focus", function () {
-    moreBubble.setAttribute('title', 'Opens Bomberman Wikipedia page in a new window.');
-});
+function handleMoreBubbleFocus() {
+    moreBubble.setAttribute('title', 'Opens Pong Wikipedia page in a new window.');
+};
+moreBubble.addEventListener("focus", handleMoreBubbleFocus);
 
-playButton.addEventListener("click", function() {
+function handlePlayButton() {
     selectMenu(menuMode, menu, modeFocus, modeItems)
-})
+}
+playButton.addEventListener("click", handlePlayButton);
 
-singleButton.addEventListener("click", function() {
+function handleSingleButton() {
     selectMenu(menuDifficulty, menuMode, difficultyFocus, difficultyItems)
-})
+}
+singleButton.addEventListener("click", handleSingleButton);
 
-quitMButton.addEventListener("click", function() {
+function handleQuitMButton() {
     selectMenu(menu, menuMode, currentFocus, menuItems)
-})
+}
+quitMButton.addEventListener("click", handleQuitMButton);
 
-// multiButton.addEventListener("click", function() {
+// function handleMultiButton() {
 //     gameMode = 'multi';
-//     selectMenu(menuDifficulty, menuMode, difficultyFocus, difficultyItems);
-// });
+//     difficultySelect = "md"; // difficulté par défaut
+//     updateStatsLabels();
+//     playGame();
+// };
+// multiButton.addEventListener("click", handleMultiButton);
 
-easyButton.addEventListener("click", function() {
+function handleEasyButton() {
     difficultySelect = "es";
     playGame();
-})
+}
+easyButton.addEventListener("click", handleEasyButton);
 
-mediumButton.addEventListener("click", function() {
+function handleMediumButton() {
     difficultySelect = "md";
     playGame();
-})
+}
+mediumButton.addEventListener("click", handleMediumButton);
 
-hardMButton.addEventListener("click", function() {
+function handleHardMButton() {
     difficultySelect = "hd";
     playGame();
-})
+}
+hardMButton.addEventListener("click", handleHardMButton);
 
-quitDMButton.addEventListener("click", function() {
+function handleQuitDMButton() {
     selectMenu(menuMode, menuDifficulty, modeFocus, modeItems)
-})
+}
+quitDMButton.addEventListener("click", handleQuitDMButton);
 
 /**
  * Gestion des touches directionnelles pour naviguer dans le menu et l'info-bulle
@@ -305,7 +300,7 @@ function handleArrowNavigation(event, focusIndex, items) {
 }
 
 // Gestionnaire d'événements
-document.addEventListener("keydown", function(event) {
+function handleDocumentKeydown(event) {
     if (menu.style.display === "block" && infoBubble.style.display !== "block") { 
         // Navigation dans le menu
         handleArrowNavigation(event, focusIndexes.menu, menuItems);
@@ -359,7 +354,8 @@ document.addEventListener("keydown", function(event) {
         stop();
         toggleMenu();
     }
-});
+};
+document.addEventListener("keydown", handleDocumentKeydown);
 
 /**
  * BOMBERMAN
@@ -419,13 +415,13 @@ let gameState = {
   }
 };
 
-let anim;
 let isUpPressed = false;
 let isDownPressed = false;
 
 
 function initializeGame() {
     isGameOver = false;
+    if (bombover === true) return;
     document.getElementById('game').style.display = 'block';
     document.getElementById('title').style.display = 'none';
     gameData.gameStartTime = Date.now();
@@ -590,6 +586,7 @@ function placeBomb() {
       owner: 'player'
     });
     gameState.stats.bombsPlaced++;
+    if (bombover === true) return;
     displayGameData();
     // gameState.player.bombs--;
   }
@@ -612,6 +609,7 @@ function explodeBomb(bomb) {
       if (gameState.grid[y][x] === 'block') {
         gameState.grid[y][x] = 'empty';
         gameState.stats.blocksDestroyed++;
+        if (bombover === true) return;
         displayGameData();
         break;
       }
@@ -634,6 +632,7 @@ function checkCollisions() {
   gameState.enemies = gameState.enemies.filter(enemy => {
     if (isInExplosion(enemy)) {
       gameState.stats.enemiesKilled++;
+      if (bombover === true) return;
       displayGameData();
       return false;
     }
@@ -728,7 +727,7 @@ function draw() {
 }
 
 // Gestion des contrôles
-document.addEventListener('keydown', (e) => {
+function handleControlKeydown(e) {
   if (isGameOver) return;
 
   const moves = {
@@ -750,7 +749,8 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === ' ') {
     placeBomb();
   }
-});
+};
+document.addEventListener('keydown', handleControlKeydown);
 
 function isCellEmpty(x, y) {
     return (
@@ -761,6 +761,7 @@ function isCellEmpty(x, y) {
 
 function displayGameData() {
     // Mettre à jour toutes les statistiques
+    if (bombover === true) return;
     document.getElementById("totalGames").textContent = gameData.totalGames;
     document.getElementById("totalBombs").textContent = gameState.stats.bombsPlaced;
     document.getElementById("enemiesKilled").textContent = gameState.stats.enemiesKilled;
@@ -769,16 +770,6 @@ function displayGameData() {
     const winRatio = gameData.totalGames > 0 ? 
         (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2) : 0;
     document.getElementById("winRatio").textContent = `${winRatio}%`;
-
-    // Actualiser l'historique
-    const lastGamesList = document.getElementById("lastGames");
-lastGamesList.innerHTML = gameData.lastGames
-    .slice(0, 5)
-    .map(game => {
-        const minutes = (game.duration / 60).toFixed(1);
-        return `<li>${game.winner} - ${minutes}m</li>`;
-    })
-    .join('');
 }
 
 function recordGameData(winner) {
@@ -801,6 +792,7 @@ function recordGameData(winner) {
     // Garder seulement 5 résultats
     if (gameData.lastGames.length > 5) gameData.lastGames.pop();
 
+    if (bombover === true) return;
     // Actualiser l'affichage
     displayGameData();
 }
@@ -823,6 +815,7 @@ function keyUpHandler(e) {
 function endGame(won) {
     if (isGameOver) return;
     isGameOver = true;
+    if (bombover === true) return;
     
     cancelAnimationFrame(anim);
     window.removeEventListener('keydown', keyDownHandler);
@@ -868,4 +861,29 @@ function endGame(won) {
         isGameOver = false;
     };
 }
-z
+}
+
+export function destroy(){
+    console.log("Bomberman destroy");
+    // if(anim){
+    //     cancelAnimationFrame(anim);
+    // }
+    menuLink.removeEventListener("click", handleMenuLinkClick);
+    closeBubble.removeEventListener("click", handleCloseBubble);
+    quitButton.removeEventListener("click", handleQuitButton);
+    infoButton.removeEventListener("click", handleInfoButton);
+    moreBubble.removeEventListener("click", handleMoreBubble);
+    moreBubble.removeEventListener("focus", handleMoreBubbleFocus);
+    playButton.removeEventListener("click", handlePlayButton);
+    singleButton.removeEventListener("click", handleSingleButton);
+    quitMButton.removeEventListener("click", handleQuitMButton);
+    easyButton.removeEventListener("click", handleEasyButton);
+    mediumButton.removeEventListener("click", handleMediumButton);
+    hardMButton.removeEventListener("click", handleHardMButton);
+    quitDMButton.removeEventListener("click", handleQuitDMButton);
+    document.removeEventListener("keydown", handleDocumentKeydown);
+    window.removeEventListener('keydown', handleWindowKeydown);
+    window.removeEventListener('keydown', keyDownHandler);
+    window.removeEventListener('keyup', keyUpHandler);
+    document.removeEventListener('keydown', handleControlKeydown);
+}

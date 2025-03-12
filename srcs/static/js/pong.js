@@ -1,8 +1,8 @@
-
+import { pongover } from "./spa.js";
 // ----------------------------------------------------
 // Déclaration des éléments DOM utilisés dans le script
 // ----------------------------------------------------
-
+export function init(){
 const firstInstruct = document.getElementById("firstInstruct");
 const secondInstruct = document.getElementById("secondInstruct");
 const menuLink = document.getElementById("menuLink");
@@ -37,18 +37,57 @@ const quitStButton = document.getElementById("qsButton");
 
 const title = document.getElementById("title");
 const pong = document.getElementById("game");
-const MAX_BALL_SPEED = 8; // Vitesse maximale autorisée
+const MAX_BALL_SPEED = 2; // Vitesse maximale autorisée
+
+let DIFFICULTY = 1;
+let isGameOver = false;
 
 
+const PLAYER_HEIGHT = 80;
+const PLAYER_WIDTH = 4;
+const BALL_RADIUS = 5;
+const BALL_INITIAL_SPEED = 2;
+const COMPUTER_SPEED_FACTOR = 0.85;
+const PLAYER_SPEED = 5; // Vitesse de déplacement du joueur
+const COLORS = {
+    background: '#262324',
+    paddle: '#fcfcec',
+    ball: '#fcfcec',
+    line: '#fcfcec'
+};
+const winnerScore = 3;
 let currentFocus = 0;
 let bubbleFocus = 0;
 let modeFocus = 0;
 let difficultyFocus = 0;
+canvas = document.getElementById('canvas');
+    if (!canvas) {
+        console.error("Canvas not found!");
+        return;
+    }
+let context = canvas.getContext('2d');
+let anim;
+let isGamming = false;
+let isUpPressed = false;
+let isDownPressed = false;
 
 let difficultySelect = "md";
 let gameMode = 'single'; // 'single' ou 'multi'
 let isWPressed = false;
 let isSPressed = false;
+game = {
+    player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+    computer: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+    ball: {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        prevX: canvas.width / 2, // precedent emplacement
+        prevY: canvas.height / 2, // precedent emplacement
+        r: BALL_RADIUS,
+        speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED },
+        lastHit: null
+    }
+};
 
 let textInterval;
 
@@ -200,15 +239,16 @@ function playGame() {
 /**
  * Ouvre/ferme le menu lorsque l'on clique sur "INSERT COIN"
  */
-menuLink.addEventListener("click", function(event) {
+function handleMenuLinkClick(event) {
     event.preventDefault();
     toggleMenu();
-});
+}
+menuLink.addEventListener("click", handleMenuLinkClick);
 
 /**
  * Fermeture de l'info-bulle en cliquant sur "Close"
  */
-closeBubble.addEventListener("click", function() {
+function handleCloseBubble() {
     enableMenu();
     infoBubble.style.display = 'none';
     infoButton.focus();
@@ -218,69 +258,82 @@ closeBubble.addEventListener("click", function() {
     if (textInterval) {
         clearInterval(textInterval);
     }
-});
+};
+closeBubble.addEventListener("click", handleCloseBubble);
 
-quitButton.addEventListener("click", function() {
+function handleQuitButton() {
     selectMenu(menuLink, menu, null, null);
-})
+}
+quitButton.addEventListener("click", handleQuitButton);
 
 /**
  * Ouverture de l'info-bulle en cliquant sur "INFO"
  */
-infoButton.addEventListener("click", function() {
+function handleInfoButton() {
     toggleInfoBubble();
-});
+};
+infoButton.addEventListener("click", handleInfoButton);
 
 /**
  * Action pour "More Info"
  */
-moreBubble.addEventListener("click", function () {
+function handleMoreBubble() {
     window.open("https://en.wikipedia.org/wiki/Pong", "_blank");
-});
+};
+moreBubble.addEventListener("click", handleMoreBubble);
 
-moreBubble.addEventListener("focus", function () {
+function handleMoreBubbleFocus() {
     moreBubble.setAttribute('title', 'Opens Pong Wikipedia page in a new window.');
-});
+};
+moreBubble.addEventListener("focus", handleMoreBubbleFocus);
 
-playButton.addEventListener("click", function() {
+function handlePlayButton() {
     selectMenu(menuMode, menu, modeFocus, modeItems)
-})
+}
+playButton.addEventListener("click", handlePlayButton);
 
-singleButton.addEventListener("click", function() {
+function handleSingleButton() {
     gameMode = 'single';
     updateStatsLabels();
     selectMenu(menuDifficulty, menuMode, difficultyFocus, difficultyItems)
-})
+}
+singleButton.addEventListener("click", handleSingleButton);
 
-quitMButton.addEventListener("click", function() {
+function handleQuitMButton() {
     selectMenu(menu, menuMode, currentFocus, menuItems)
-})
+}
+quitMButton.addEventListener("click", handleQuitMButton);
 
-multiButton.addEventListener("click", function() {
+function handleMultiButton() {
     gameMode = 'multi';
     difficultySelect = "md"; // difficulté par défaut
     updateStatsLabels();
     playGame();
-});
+};
+multiButton.addEventListener("click", handleMultiButton);
 
-easyButton.addEventListener("click", function() {
+function handleEasyButton() {
     difficultySelect = "es";
     playGame();
-})
+}
+easyButton.addEventListener("click", handleEasyButton);
 
-mediumButton.addEventListener("click", function() {
+function handleMediumButton() {
     difficultySelect = "md";
     playGame();
-})
+}
+mediumButton.addEventListener("click", handleMediumButton);
 
-hardMButton.addEventListener("click", function() {
+function handleHardMButton() {
     difficultySelect = "hd";
     playGame();
-})
+}
+hardMButton.addEventListener("click", handleHardMButton);
 
-quitDMButton.addEventListener("click", function() {
+function handleQuitDMButton() {
     selectMenu(menuMode, menuDifficulty, modeFocus, modeItems)
-})
+}
+quitDMButton.addEventListener("click", handleQuitDMButton);
 
 /**
  * Gestion des touches directionnelles pour naviguer dans le menu et l'info-bulle
@@ -298,7 +351,7 @@ function handleArrowNavigation(event, focusIndex, items) {
 }
 
 // Gestionnaire d'événements
-document.addEventListener("keydown", function(event) {
+function handleDocumentKeydown(event) {
     if (menu.style.display === "block" && infoBubble.style.display !== "block") { 
         // Navigation dans le menu
         handleArrowNavigation(event, focusIndexes.menu, menuItems);
@@ -354,7 +407,9 @@ document.addEventListener("keydown", function(event) {
         stop();
         toggleMenu();
     }
-});
+};
+document.addEventListener("keydown", handleDocumentKeydown);
+
 
 /**
  * PONG
@@ -363,41 +418,11 @@ document.addEventListener("keydown", function(event) {
 'use strict';
 
 // Configuration des constantes
-let DIFFICULTY = 1;
-let isGameOver = false;
 
-
-const PLAYER_HEIGHT = 80;
-const PLAYER_WIDTH = 4;
-const BALL_RADIUS = 5;
-const BALL_INITIAL_SPEED = 2;
-const COMPUTER_SPEED_FACTOR = 0.85;
-const PLAYER_SPEED = 5; // Vitesse de déplacement du joueur
-const COLORS = {
-    background: '#262324',
-    paddle: '#fcfcec',
-    ball: '#fcfcec',
-    line: '#fcfcec'
-};
-const winnerScore = 3;
-
-let canvas;
-let context;
-let anim;
-let game;
-let isGamming = false;
-let isUpPressed = false;
-let isDownPressed = false;
 
 // Initialisation du jeu
 function initializeGame() {
-    canvas = document.getElementById('canvas');
-    if (!canvas) {
-        console.error("Canvas not found!");
-        return;
-    }
     gameData.gameStartTime = Date.now();
-    context = canvas.getContext('2d');
 
     game = {
         player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
@@ -670,6 +695,7 @@ function collide(player) {
 }
 
 function displayGameData() {
+    if (pongover === true) return;
     document.getElementById("totalGames").textContent = gameData.totalGames;
     document.getElementById("totalPlayerScore").textContent = gameData.totalScore.player;
     document.getElementById("totalComputerScore").textContent = gameData.totalScore.computer;
@@ -696,6 +722,7 @@ document.getElementById("perfectComputer").textContent = gameMode === 'multi'
 }
 
 function updateStatsLabels() {
+    if (pongover === true) return;
     if (gameMode === 'multi') {
         document.getElementById('playerLabel').textContent = 'Joueur 1 :';
         document.getElementById('opponentLabel').textContent = 'Joueur 2 :';
@@ -755,6 +782,7 @@ function recordGameData(winner) {
     }
 
     // Afficher les données mises à jour
+    if (pongover === true) return;
     displayGameData();
 }
 
@@ -780,7 +808,7 @@ function resetBall() {
 // ----------------------------------------------------
 // Gestion des événements globaux
 // ----------------------------------------------------
-window.addEventListener('keydown', (event) => {
+function handleWindowKeydown(event) {
     if (isGameOver) {
         if (event.key === 'b') {
             // Redémarrer le jeu
@@ -794,9 +822,12 @@ window.addEventListener('keydown', (event) => {
             isGameOver = false; // Réinitialiser l'état du jeu
         }
     }
-});
+};
+window.addEventListener('keydown', handleWindowKeydown);
+
 
 function initializeBackgroundGame() {
+    if (pongover === true) return;
     const bgCanvas = document.getElementById('backgroundCanvas');
     const bgContext = bgCanvas.getContext('2d');
     bgCanvas.width = 640;
@@ -851,4 +882,29 @@ function moveBot(player, ball, canvasHeight) {
 
 updateStatsLabels();
 initializeBackgroundGame();
-z
+}
+
+export function destroy(){
+    console.log("Pong destroy");
+    // if(anim){
+    //     cancelAnimationFrame(anim);
+    // }
+    menuLink.removeEventListener("click", handleMenuLinkClick);
+    closeBubble.removeEventListener("click", handleCloseBubble);
+    quitButton.removeEventListener("click", handleQuitButton);
+    infoButton.removeEventListener("click", handleInfoButton);
+    moreBubble.removeEventListener("click", handleMoreBubble);
+    moreBubble.removeEventListener("focus", handleMoreBubbleFocus);
+    playButton.removeEventListener("click", handlePlayButton);
+    singleButton.removeEventListener("click", handleSingleButton);
+    quitMButton.removeEventListener("click", handleQuitMButton);
+    multiButton.removeEventListener("click", handleMultiButton);
+    easyButton.removeEventListener("click", handleEasyButton);
+    mediumButton.removeEventListener("click", handleMediumButton);
+    hardMButton.removeEventListener("click", handleHardMButton);
+    quitDMButton.removeEventListener("click", handleQuitDMButton);
+    document.removeEventListener("keydown", handleDocumentKeydown);
+    window.removeEventListener('keydown', handleWindowKeydown);
+    window.removeEventListener('keydown', keyDownHandler);
+    window.removeEventListener('keyup', keyUpHandler);
+}

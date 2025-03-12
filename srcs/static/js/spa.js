@@ -1,6 +1,17 @@
 
 // i18n
 
+// import { init } from "./Bomberman.js";
+// import { init } from "./pong-ameliore.js";
+// import { init } from "./pong.js";
+// import { destroyPong } from "./pong.js";
+// import { initPongImproved } from "./pong-ameliore";
+// import { initBomberman } from "./Bomberman";
+let currentGame = null;
+export let bombover = true;
+export let pongadvover = true;
+export let pongover = true;
+
 const i18n = i18next.createInstance();
 
 i18n
@@ -801,6 +812,12 @@ router.on('/password-change-success', loadPasswordChangeSuccessPage);
 router.on('/chat', loadChatPage);
 router.on('/pong', async () => {
     try {
+        // if (currentGame && typeof currentGame.destroy === 'function') {
+        //     currentGame.destroy();
+        // }
+        bombover = true;
+        pongadvover = true;
+        pongover = false;
         const html = `<body>
 
         <div id="content">
@@ -871,12 +888,15 @@ router.on('/pong', async () => {
     </main>
 </div>`
         document.querySelector('#app').innerHTML = html;
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // Charger les scripts nécessaires
-        const pong = document.createElement('script');
-        pong.src = "/static/js/pong.js";
-        pong.defer = true;
-        document.body.appendChild(pong);
+        // currentGame = initPong();
+        // Conserver la référence au module pour pouvoir le détruire lors d'un prochain changement de route
+        // currentGame = pongModule;
+        const pongModule = await import('/static/js/pong.js');
+        pongModule.init();
+        currentGame = pongModule;
     } catch (error) {
         console.error("Erreur lors du chargement de Pong:", error);
     }
@@ -884,6 +904,12 @@ router.on('/pong', async () => {
 });
 router.on('/pong-ameliore', async () => {
     try {
+        // if (currentGame && typeof currentGame.destroy === 'function') {
+        //     currentGame.destroy();
+        // }
+        bombover = true;
+        pongover = true;
+        pongadvover = false;
         const html = `<body>
 
         <div id="content">
@@ -953,15 +979,22 @@ router.on('/pong-ameliore', async () => {
             <p>Dernières parties :</p>
             <ul id="lastGames"></ul>
         </div>
+        <canvas id="backgroundCanvas" style="display: none;"></canvas>
     </main>
 </div>`
         document.querySelector('#app').innerHTML = html;
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // Charger les scripts nécessaires
-        const pong_improved = document.createElement('script');
-        pong_improved.src = "/static/js/pong-ameliore.js";
-        pong_improved.defer = true;
-        document.body.appendChild(pong_improved);
+        // const pong_improved = document.createElement('script');
+        // pong_improved.src = "/static/js/pong-ameliore.js";
+        // pong_improved.defer = true;
+        // document.body.appendChild(pong_improved);
+
+        // currentGame = initPongImproved();
+        const pongImproveModule = await import('/static/js/pong-ameliore.js');
+        pongImproveModule.init();
+        currentGame = pongImproveModule;
     } catch (error) {
         console.error("Erreur lors du chargement de Pong Ameliore:", error);
     }
@@ -969,6 +1002,12 @@ router.on('/pong-ameliore', async () => {
 });
 router.on('/Bomberman', async () => {
     try {
+        // if (currentGame && typeof currentGame.destroy === 'function') {
+        //     currentGame.destroy();
+        // }
+        pongover = true;
+        pongadvover = true;
+        bombover = false;
         const html = `<div id="content">
         <header>
         <h1 id="title" class="titlePong">Bomberman<br/></h1>
@@ -1026,7 +1065,7 @@ router.on('/Bomberman', async () => {
             <canvas id="canvas" width="600" height="600"></canvas>
         </div>
         
-        <div id="gameStats">
+         <div id="gameStats">
             <h2>Statistiques</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
             <p>Bombes placées : <span id="totalBombs">0</span></p>
@@ -1049,12 +1088,17 @@ router.on('/Bomberman', async () => {
     </main>
 </div>`
         document.querySelector('#app').innerHTML = html;
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // Charger les scripts nécessaires
-        const Bomberman = document.createElement('script');
-        Bomberman.src = "/static/js/Bomberman.js";
-        Bomberman.defer = true;
-        document.body.appendChild(Bomberman);
+        // const Bomberman = document.createElement('script');
+        // Bomberman.src = "/static/js/Bomberman.js";
+        // Bomberman.defer = true;
+        // document.body.appendChild(Bomberman);
+        // currentGame = initBomberman();
+        const bombermanModule = await import('/static/js/Bomberman.js');
+        bombermanModule.init();
+        currentGame = bombermanModule;
     } catch (error) {
         console.error("Erreur lors du chargement de Bomberman:", error);
     }
