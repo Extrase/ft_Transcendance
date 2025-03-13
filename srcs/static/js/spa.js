@@ -235,6 +235,9 @@ function getCookie(name) {
 
 // CHARGER DYNAMIQUEMENT LA PAGE D'ACCUEIL
 function loadHomePage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     fetch('/api/home/')
     .then(response => response.json())
     .then(data => {
@@ -245,6 +248,9 @@ function loadHomePage() {
 }
 
 function loadSignUpPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const csrfToken = getCookie('csrftoken');
 
     const signUpHTML = `
@@ -339,6 +345,9 @@ async function handleSignUp(event) {
 }
 
 async function loadProfilePage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     try {
         const response = await fetch('/api/profile/');
         if (!response.ok) throw new Error('Failed to fetch profile data');
@@ -433,7 +442,13 @@ function generateProfileContent(data) {
                         <a href="/change-password" class="profile-link custom-change-password-btn" data-link>
                             <i class="fas fa-key"></i> <span data-i18n="profile.change_password"></span>
                         </a>
+                        <a href="/auth/update_user/" class="profile-link custom-change-password-btn" data-link>
+                            <i class="fas fa-user-edit"></i> Change My Profile
+                        </a>
                         ` : ''}
+                        <a href="/auth/delete_user/" class="profile-link danger" data-link>
+                            <i class="fas fa-user-slash"></i> Delete Account
+                        </a>
                         <button class="profile-link danger" id="logoutButton">
                             <i class="fas fa-sign-out-alt"></i> <span data-i18n="nav.logout"></span>
                         </button>
@@ -591,6 +606,9 @@ function saveProfileColors(startColor, endColor) {
 }
 
 function loadLoginPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const csrfToken = getCookie('csrftoken');
     
     const loginHTML = `
@@ -630,6 +648,9 @@ function loadLoginPage() {
 }
 
 function loadChangePasswordPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const csrfToken = getCookie('csrftoken');
 
     const changePasswordHTML = `
@@ -683,6 +704,9 @@ function loadChangePasswordPage() {
 }
 
 function loadPasswordChangeSuccessPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const successHTML = `
         <div class="success-section">
             <h2 data-i18n="password_change.success.title"></h2>
@@ -693,6 +717,159 @@ function loadPasswordChangeSuccessPage() {
 
     document.querySelector('#app').innerHTML = successHTML;
     updateTranslations();
+}
+
+async function loadUpdateUserPage() {
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+        // Récupérer les données de l'utilisateur via la nouvelle API
+        const response = await fetch('/api/user-data/');
+        const userData = await response.json();
+
+        document.querySelector('#app').innerHTML = `
+            <div class="signup-section">
+                <h2>Update your profile</h2>
+                <div id="error-messages" class="alert alert-danger" style="display: none;"></div>
+                <form id="signup-form" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <div class="form-group">
+                        <label for="id_username">Username:</label>
+                        <input type="text" name="username" id="id_username" class="form-control"
+                            value="${userData.username}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_email">Email:</label>
+                        <input type="email" name="email" id="id_email" class="form-control"
+                            value="${userData.email}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_profile_photo">Profile Photo:</label>
+                        <input type="file" id="id_profile_photo" name="profile_photo"
+                            class="form-control" accept="image/*">
+                        ${userData.profile_photo ?
+                            `<img src="${userData.profile_photo}" alt="Current profile photo"
+                                style="max-width: 100px; margin-top: 10px;">` : ''}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_first_name">First Name:</label>
+                        <input type="text" name="first_name" id="id_first_name" class="form-control"
+                            value="${userData.first_name}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_last_name">Last Name:</label>
+                        <input type="text" name="last_name" id="id_last_name" class="form-control"
+                            value="${userData.last_name}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
+        `;
+
+        // Ajouter les écouteurs d'événements
+        document.querySelector('#signup-form').addEventListener('submit', handleUpdateUser);
+
+        const avatarInput = document.querySelector('#id_profile_photo');
+        if (avatarInput) {
+            avatarInput.addEventListener('change', function() {
+                checkAvatar(avatarInput);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showMessage('Error loading user data', 'error');
+    }
+}
+
+
+async function handleUpdateUser(event) {
+    event.preventDefault();
+
+    const form = document.querySelector('#signup-form');
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('/auth/update_user/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+
+        if (response.ok) {
+            alert('Mis à jour du profil réussi !');
+            router.navigate('/profile');
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-messages').style.display = 'block';
+            document.getElementById('error-messages').innerText = errorData.detail || 'Erreur inconnue';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la mis à jour du profil utilisaateur :", error);
+        alert('Une erreur est survenue lors de la mis à jour du profil utilisaateur.');
+    }
+}
+
+async function handleDeleteUser(event) {
+    event.preventDefault();
+
+    if (!confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/auth/delete_user/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            alert('Compte supprimé avec succès !');
+            window.location.href = '/login';  // Redirection directe
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-messages').style.display = 'block';
+            document.getElementById('error-messages').innerText = errorData.detail || 'Erreur inconnue';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la suppression du compte :", error);
+        alert('Une erreur est survenue lors de la suppression du compte.');
+    }
+}
+
+async function loadDeleteUserPage() {
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+        // Récupérer les données de l'utilisateur via la nouvelle API
+        const response = await fetch('/api/user-data/');
+        const userData = await response.json();
+
+        document.querySelector('#app').innerHTML = `
+            <div class="signup-section">
+                <h2>Delete your account</h2>
+                <div id="error-messages" class="alert alert-danger" style="display: none;"></div>
+                    <a href="/profile" class="profile-link custom-change-password-btn" data-link>
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                <form id="signup-form" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <button type="submit" class="btn btn-primary">Delete</button>
+                </form>
+            </div>
+        `;
+
+        // Ajouter les écouteurs d'événements
+        document.querySelector('#signup-form').addEventListener('submit', handleDeleteUser);
+
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showMessage('Error loading user data', 'error');
+    }
 }
 
 
@@ -809,15 +986,17 @@ router.on('/signup', loadSignUpPage);
 router.on('/profile', loadProfilePage);
 router.on('/change-password', loadChangePasswordPage);
 router.on('/password-change-success', loadPasswordChangeSuccessPage);
+router.on('/auth/delete_user', loadDeleteUserPage);
+router.on('/auth/update_user', loadUpdateUserPage);
 router.on('/chat', loadChatPage);
 router.on('/pong', async () => {
     try {
-        // if (currentGame && typeof currentGame.destroy === 'function') {
-        //     currentGame.destroy();
-        // }
         bombover = true;
         pongadvover = true;
         pongover = false;
+        if (currentGame && typeof currentGame.destroy === 'function') {
+            currentGame.destroy();
+        }
         const html = `<body>
 
         <div id="content">

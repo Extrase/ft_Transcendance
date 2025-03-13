@@ -826,50 +826,50 @@ function handleWindowKeydown(event) {
 window.addEventListener('keydown', handleWindowKeydown);
 
 
-function initializeBackgroundGame() {
-    if (pongover === true) return;
-    const bgCanvas = document.getElementById('backgroundCanvas');
-    const bgContext = bgCanvas.getContext('2d');
-    bgCanvas.width = 640;
-    bgCanvas.height = 420;
+// function initializeBackgroundGame() {
+//     if (pongover === true) return;
+//     const bgCanvas = document.getElementById('backgroundCanvas');
+//     const bgContext = bgCanvas.getContext('2d');
+//     bgCanvas.width = 640;
+//     bgCanvas.height = 420;
 
-    const bgGame = {
-        player: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
-        computer: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
-        ball: {
-            x: bgCanvas.width / 2,
-            y: bgCanvas.height / 2,
-            r: BALL_RADIUS,
-            speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED }
-        }
-    };
+//     const bgGame = {
+//         player: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
+//         computer: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
+//         ball: {
+//             x: bgCanvas.width / 2,
+//             y: bgCanvas.height / 2,
+//             r: BALL_RADIUS,
+//             speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED }
+//         }
+//     };
 
-    function drawBackground() {
-        bgContext.fillStyle = COLORS.background;
-        bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+//     function drawBackground() {
+//         bgContext.fillStyle = COLORS.background;
+//         bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-        // Dessinez les paddles et la balle
-        drawPaddle(bgContext, 10, bgGame.player.y);
-        drawPaddle(bgContext, bgCanvas.width - PLAYER_WIDTH - 10, bgGame.computer.y);
-        drawBall(bgContext, bgGame.ball);
-    }
+//         // Dessinez les paddles et la balle
+//         drawPaddle(bgContext, 10, bgGame.player.y);
+//         drawPaddle(bgContext, bgCanvas.width - PLAYER_WIDTH - 10, bgGame.computer.y);
+//         drawBall(bgContext, bgGame.ball);
+//     }
 
-    function updateBackgroundGame() {
-        // Déplace les joueurs bots
-        moveBot(bgGame.player, bgGame.ball, bgCanvas.height);
-        moveBot(bgGame.computer, bgGame.ball, bgCanvas.height);
+//     function updateBackgroundGame() {
+//         // Déplace les joueurs bots
+//         moveBot(bgGame.player, bgGame.ball, bgCanvas.height);
+//         moveBot(bgGame.computer, bgGame.ball, bgCanvas.height);
 
-        // Déplace la balle
-        ballMove();
+//         // Déplace la balle
+//         ballMove();
 
-        // Redessinez la scène
-        drawBackground();
+//         // Redessinez la scène
+//         drawBackground();
 
-        requestAnimationFrame(updateBackgroundGame);
-    }
+//         requestAnimationFrame(updateBackgroundGame);
+//     }
 
-    updateBackgroundGame();
-}
+//     updateBackgroundGame();
+// }
 
 function moveBot(player, ball, canvasHeight) {
     const targetY = ball.y - PLAYER_HEIGHT / 2;
@@ -881,10 +881,11 @@ function moveBot(player, ball, canvasHeight) {
 }
 
 updateStatsLabels();
-initializeBackgroundGame();
+// initializeBackgroundGame();
 }
 
 export function destroy(){
+    if (pongover = false) return;
     console.log("Pong destroy");
     // if(anim){
     //     cancelAnimationFrame(anim);
