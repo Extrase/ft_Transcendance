@@ -2,6 +2,17 @@ import { pongadvover } from "./spa.js";
 // ----------------------------------------------------
 // Déclaration des éléments DOM utilisés dans le script
 // ----------------------------------------------------
+
+let gameData = {
+    totalGames: 0, // Nombre total de parties jouées
+    totalScore: { player: 0, computer: 0 }, // Score total cumulé
+    winLossRatio: { wins: 0, losses: 0 }, // Taux de victoires/défaites
+    perfectGames: { player: 0, computer: 0 }, // Nombre de parties parfaites
+    lastGames: [], // Historique des dernières parties
+    gameStartTime: null, // Heure de début de la partie
+    gameDuration: null, // Durée de la partie
+};
+
 export function init(){
 const firstInstruct = document.getElementById("firstInstruct");
 const secondInstruct = document.getElementById("secondInstruct");
@@ -100,16 +111,6 @@ let focusIndexes = {
     bubble: { value: 0 },
     mode: { value: 0 },
     difficulty: { value: 0 }
-};
-
-let gameData = {
-    totalGames: 0, // Nombre total de parties jouées
-    totalScore: { player: 0, computer: 0 }, // Score total cumulé
-    winLossRatio: { wins: 0, losses: 0 }, // Taux de victoires/défaites
-    perfectGames: { player: 0, computer: 0 }, // Nombre de parties parfaites
-    lastGames: [], // Historique des dernières parties
-    gameStartTime: null, // Heure de début de la partie
-    gameDuration: null, // Durée de la partie
 };
 
 const POWERUP_RADIUS = 20; // Taille du power-up
@@ -841,7 +842,7 @@ function collide(player, ball) {
             isGameOver = true;
 
             // Enregistrer les données de la partie
-            recordGameData(winner);
+            endGame(winner);
         }
 
         resetBall(ball);
@@ -855,6 +856,62 @@ function collide(player, ball) {
         ball.speed.y = Math.sign(ball.speed.y) * Math.min(Math.abs(ball.speed.y), MAX_BALL_SPEED);
         changeDirection(ball, player.y);
     }
+}
+
+function endGame(winner) {
+    if (isGameOver) return;
+    isGameOver = true;
+    let won = false;
+    if (pongadvover === true) return;
+    
+    if (winner === "Player 1" || winner === "Player 2" ||winner === "Le joueur")
+        won = true;
+    cancelAnimationFrame(anim);
+    window.removeEventListener('keydown', keyDownHandler);
+    window.removeEventListener('keyup', keyUpHandler);
+
+    if (pongadvover === true) return;
+    recordGameData(winner);
+    if (pongadvover === true) return;
+    displayGameData();
+
+    // Afficher le menu de fin
+    const endGameMenu = document.getElementById('endGameMenu');
+    const gameOverText = document.getElementById('gameOverText');
+    endGameMenu.style.display = 'block';
+    gameOverText.textContent = won ? 'VICTOIRE !' : 'GAME OVER';
+    gameOverText.style.color = won ? '#4CAF50' : '#F44336';
+
+    // Gestion des boutons
+    document.getElementById('replayButton').onclick = () => {
+        endGameMenu.style.display = 'none';
+        
+        // Réinitialiser complètement l'état du jeu
+        game = {
+            player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+            computer: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+            ball: {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                prevX: canvas.width / 2, // precedent emplacement
+                prevY: canvas.height / 2, // precedent emplacement
+                r: BALL_RADIUS,
+                speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED },
+                lastHit: null
+            }
+        };
+        if (pongadvover === true) return;
+        initializeGame(); // Relancer une nouvelle partie
+    };
+
+    document.getElementById('quitEndButton').onclick = () => {
+        endGameMenu.style.display = 'none';
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('title').style.display = 'block';
+        menu.style.display = 'block';
+        secondInstruct.style.display = 'block';
+        isGameOver = false;
+    };
 }
 
 function displayGameData() {
@@ -908,12 +965,14 @@ function recordGameData(winner) {
     gameData.totalGames++;
 
     // Mettre à jour le taux de victoires/défaites
-    if (winner === "Le joueur") {
-        gameData.winLossRatio.wins++;
-    } else {
-        gameData.winLossRatio.losses++;
-    }
-
+    if (gameMode === 'single')
+        {
+            if (winner === "Le joueur") {
+                gameData.winLossRatio.wins++;
+            } else {
+                gameData.winLossRatio.losses++;
+            }
+        }
     // Vérifier si c'est une partie parfaite
     if (gameMode === 'single') {
         if (winner === "Le joueur" && game.computer.score === 0) {
@@ -1038,29 +1097,4 @@ function moveBot(player, ball, canvasHeight) {
 
 updateStatsLabels();
 initializeBackgroundGame();
-}
-
-export function destroy(){
-    console.log("Pong Improved destroy");
-    // if(anim){
-    //     cancelAnimationFrame(anim);
-    // }
-    menuLink.removeEventListener("click", handleMenuLinkClick);
-    closeBubble.removeEventListener("click", handleCloseBubble);
-    quitButton.removeEventListener("click", handleQuitButton);
-    infoButton.removeEventListener("click", handleInfoButton);
-    moreBubble.removeEventListener("click", handleMoreBubble);
-    moreBubble.removeEventListener("focus", handleMoreBubbleFocus);
-    playButton.removeEventListener("click", handlePlayButton);
-    singleButton.removeEventListener("click", handleSingleButton);
-    quitMButton.removeEventListener("click", handleQuitMButton);
-    multiButton.removeEventListener("click", handleMultiButton);
-    easyButton.removeEventListener("click", handleEasyButton);
-    mediumButton.removeEventListener("click", handleMediumButton);
-    hardMButton.removeEventListener("click", handleHardMButton);
-    quitDMButton.removeEventListener("click", handleQuitDMButton);
-    document.removeEventListener("keydown", handleDocumentKeydown);
-    window.removeEventListener('keydown', handleWindowKeydown);
-    window.removeEventListener('keydown', keyDownHandler);
-    window.removeEventListener('keyup', keyUpHandler);
 }

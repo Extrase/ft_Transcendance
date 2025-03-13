@@ -994,9 +994,9 @@ router.on('/pong', async () => {
         bombover = true;
         pongadvover = true;
         pongover = false;
-        if (currentGame && typeof currentGame.destroy === 'function') {
-            currentGame.destroy();
-        }
+        // if (currentGame && typeof currentGame.destroy === 'function') {
+        //     currentGame.destroy();
+        // }
         const html = `<body>
 
         <div id="content">
