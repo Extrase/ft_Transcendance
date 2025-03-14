@@ -844,7 +844,7 @@ function collide(player, ball) {
             // Enregistrer les données de la partie
             endGame(winner);
         }
-
+        displayGameData();
         resetBall(ball);
     } else {
         ball.speed.x *= -1.2;
@@ -920,8 +920,8 @@ function displayGameData() {
     document.getElementById("totalPlayerScore").textContent = gameData.totalScore.player;
     document.getElementById("totalComputerScore").textContent = gameData.totalScore.computer;
 
-    const winRatio = (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2);
-    document.getElementById("winRatio").textContent = `${winRatio}%`;
+    // const winRatio = (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2);
+    // document.getElementById("winRatio").textContent = `${winRatio}%`;
 
     document.getElementById("perfectPlayer").textContent = gameData.perfectGames.player;
     document.getElementById("perfectComputer").textContent = gameMode === 'multi' 
@@ -1043,48 +1043,48 @@ function handleWindowKeydown(event) {
 };
 window.addEventListener('keydown', handleWindowKeydown);
 
-function initializeBackgroundGame() {
-    if (pongadvover === true) return;
-    const bgCanvas = document.getElementById('backgroundCanvas');
-    const bgContext = bgCanvas.getContext('2d');
+// function initializeBackgroundGame() {
+//     if (pongadvover === true) return;
+//     const bgCanvas = document.getElementById('backgroundCanvas');
+//     const bgContext = bgCanvas.getContext('2d');
 
-    const bgGame = {
-        player: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
-        computer: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
-        ball: {
-            x: bgCanvas.width / 2,
-            y: bgCanvas.height / 2,
-            r: BALL_RADIUS,
-            speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED }
-        }
-    };
+//     const bgGame = {
+//         player: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
+//         computer: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
+//         ball: {
+//             x: bgCanvas.width / 2,
+//             y: bgCanvas.height / 2,
+//             r: BALL_RADIUS,
+//             speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED }
+//         }
+//     };
 
-    function drawBackground() {
-        bgContext.fillStyle = COLORS.background;
-        bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+//     function drawBackground() {
+//         bgContext.fillStyle = COLORS.background;
+//         bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-        // Dessinez les paddles et la balle
-        drawPaddle(bgContext, 10, bgGame.player.y);
-        drawPaddle(bgContext, bgCanvas.width - PLAYER_WIDTH - 10, bgGame.computer.y);
-        drawBall();
-    }
+//         // Dessinez les paddles et la balle
+//         drawPaddle(bgContext, 10, bgGame.player.y);
+//         drawPaddle(bgContext, bgCanvas.width - PLAYER_WIDTH - 10, bgGame.computer.y);
+//         drawBall();
+//     }
 
-    function updateBackgroundGame() {
-        // Déplace les joueurs bots
-        moveBot(bgGame.player, bgGame.ball, bgCanvas.height);
-        moveBot(bgGame.computer, bgGame.ball, bgCanvas.height);
+//     function updateBackgroundGame() {
+//         // Déplace les joueurs bots
+//         moveBot(bgGame.player, bgGame.ball, bgCanvas.height);
+//         moveBot(bgGame.computer, bgGame.ball, bgCanvas.height);
 
-        // Déplace la balle
-        ballMove(bgGame);
+//         // Déplace la balle
+//         ballMove(bgGame);
 
-        // Redessinez la scène
-        drawBackground();
+//         // Redessinez la scène
+//         drawBackground();
 
-        requestAnimationFrame(updateBackgroundGame);
-    }
+//         requestAnimationFrame(updateBackgroundGame);
+//     }
 
-    updateBackgroundGame();
-}
+//     updateBackgroundGame();
+// }
 
 function moveBot(player, ball, canvasHeight) {
     const targetY = ball.y - PLAYER_HEIGHT / 2;
@@ -1096,5 +1096,5 @@ function moveBot(player, ball, canvasHeight) {
 }
 
 updateStatsLabels();
-initializeBackgroundGame();
+// initializeBackgroundGame();
 }

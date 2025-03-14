@@ -767,9 +767,9 @@ function displayGameData() {
     document.getElementById("enemiesKilled").textContent = gameState.stats.enemiesKilled;
     document.getElementById("blocksDestroyed").textContent = gameState.stats.blocksDestroyed;
     
-    const winRatio = gameData.totalGames > 0 ? 
-        (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2) : 0;
-    document.getElementById("winRatio").textContent = `${winRatio}%`;
+    // const winRatio = gameData.totalGames > 0 ? 
+    //     (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2) : 0;
+    // document.getElementById("winRatio").textContent = `${winRatio}%`;
 }
 
 function recordGameData(winner) {

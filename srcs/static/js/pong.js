@@ -758,11 +758,11 @@ function displayGameData() {
     document.getElementById("totalPlayerScore").textContent = gameData.totalScore.player;
     document.getElementById("totalComputerScore").textContent = gameData.totalScore.computer;
 
-    const winRatio = (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2);
-    document.getElementById("winRatio").textContent = `${winRatio}%`;
+    // const winRatio = (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2);
+    // document.getElementById("winRatio").textContent = `${winRatio}%`;
 
     document.getElementById("perfectPlayer").textContent = gameData.perfectGames.player;
-document.getElementById("perfectComputer").textContent = gameMode === 'multi' 
+    document.getElementById("perfectComputer").textContent = gameMode === 'multi' 
     ? gameData.perfectGames.computer 
     : gameData.perfectGames.computer; // Les données restent les mêmes, seul le libellé change via updateStatsLabels()
 

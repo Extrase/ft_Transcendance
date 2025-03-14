@@ -1058,7 +1058,6 @@ router.on('/pong', async () => {
             <h2>Statistiques du jeu</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
             <p>Score total : <span id="playerLabel">Joueur</span> <span id="totalPlayerScore">0</span> - <span id="opponentLabel">Ordinateur</span> <span id="totalComputerScore">0</span></p>
-            <p>Taux de victoires : <span id="winRatio">0%</span></p>
             <p>Parties parfaites : <span id="perfectPlayerLabel">Joueur</span> <span id="perfectPlayer">0</span> - <span id="perfectOpponentLabel">Ordinateur</span> <span id="perfectComputer">0</span></p>
             <p>Dernières parties :</p>
             <ul id="lastGames"></ul>
@@ -1067,6 +1066,7 @@ router.on('/pong', async () => {
     </main>
 </div>`
         document.querySelector('#app').innerHTML = html;
+        // <p>Taux de victoires : <span id="winRatio">0%</span></p> ne pas l'oublier
         await new Promise(resolve => setTimeout(resolve, 50));
 
         // Charger les scripts nécessaires
@@ -1153,7 +1153,6 @@ router.on('/pong-ameliore', async () => {
             <h2>Statistiques du jeu</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
             <p>Score total : <span id="playerLabel">Joueur</span> <span id="totalPlayerScore">0</span> - <span id="opponentLabel">Ordinateur</span> <span id="totalComputerScore">0</span></p>
-            <p>Taux de victoires : <span id="winRatio">0%</span></p>
             <p>Parties parfaites : <span id="perfectPlayerLabel">Joueur</span> <span id="perfectPlayer">0</span> - <span id="perfectOpponentLabel">Ordinateur</span> <span id="perfectComputer">0</span></p>
             <p>Dernières parties :</p>
             <ul id="lastGames"></ul>
@@ -1163,6 +1162,7 @@ router.on('/pong-ameliore', async () => {
 </div>`
         document.querySelector('#app').innerHTML = html;
         await new Promise(resolve => setTimeout(resolve, 50));
+         // <p>Taux de victoires : <span id="winRatio">0%</span></p> ne pas l'oublier
 
         // Charger les scripts nécessaires
         // const pong_improved = document.createElement('script');
@@ -1250,7 +1250,6 @@ router.on('/Bomberman', async () => {
             <p>Bombes placées : <span id="totalBombs">0</span></p>
             <p>Blocs détruits : <span id="blocksDestroyed">0</span></p>
             <p>Ennemis tués : <span id="enemiesKilled">0</span></p>
-            <p>Ratio de victoire : <span id="winRatio">0%</span></p>
         </div>
         
         <div id="gameHistory">
@@ -1268,6 +1267,7 @@ router.on('/Bomberman', async () => {
 </div>`
         document.querySelector('#app').innerHTML = html;
         await new Promise(resolve => setTimeout(resolve, 50));
+         // <p>Taux de victoires : <span id="winRatio">0%</span></p> ne pas l'oublier
 
         // Charger les scripts nécessaires
         // const Bomberman = document.createElement('script');
