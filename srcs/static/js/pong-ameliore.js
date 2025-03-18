@@ -839,8 +839,6 @@ function collide(player, ball) {
             winner = gameMode === 'multi' ? "Player 2" : "L'ordinateur";
         }
             drawWinningMessage(winner);
-            isGameOver = true;
-
             // Enregistrer les données de la partie
             endGame(winner);
         }
@@ -861,11 +859,8 @@ function collide(player, ball) {
 function endGame(winner) {
     if (isGameOver) return;
     isGameOver = true;
-    let won = false;
     if (pongadvover === true) return;
     
-    if (winner === "Player 1" || winner === "Player 2" ||winner === "Le joueur")
-        won = true;
     cancelAnimationFrame(anim);
     window.removeEventListener('keydown', keyDownHandler);
     window.removeEventListener('keyup', keyUpHandler);
@@ -875,43 +870,9 @@ function endGame(winner) {
     if (pongadvover === true) return;
     displayGameData();
 
-    // Afficher le menu de fin
-    const endGameMenu = document.getElementById('endGameMenu');
-    const gameOverText = document.getElementById('gameOverText');
-    endGameMenu.style.display = 'block';
-    gameOverText.textContent = won ? 'VICTOIRE !' : 'GAME OVER';
-    gameOverText.style.color = won ? '#4CAF50' : '#F44336';
 
     // Gestion des boutons
-    document.getElementById('replayButton').onclick = () => {
-        endGameMenu.style.display = 'none';
-        
-        // Réinitialiser complètement l'état du jeu
-        game = {
-            player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
-            computer: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
-            ball: {
-                x: canvas.width / 2,
-                y: canvas.height / 2,
-                prevX: canvas.width / 2, // precedent emplacement
-                prevY: canvas.height / 2, // precedent emplacement
-                r: BALL_RADIUS,
-                speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED },
-                lastHit: null
-            }
-        };
-        if (pongadvover === true) return;
-        initializeGame(); // Relancer une nouvelle partie
-    };
-
-    document.getElementById('quitEndButton').onclick = () => {
-        endGameMenu.style.display = 'none';
-        document.getElementById('game').style.display = 'none';
-        document.getElementById('title').style.display = 'block';
-        menu.style.display = 'block';
-        secondInstruct.style.display = 'block';
-        isGameOver = false;
-    };
+    window.addEventListener('keydown', handleWindowKeydown);
 }
 
 function displayGameData() {
@@ -920,8 +881,11 @@ function displayGameData() {
     document.getElementById("totalPlayerScore").textContent = gameData.totalScore.player;
     document.getElementById("totalComputerScore").textContent = gameData.totalScore.computer;
 
-    // const winRatio = (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2);
-    // document.getElementById("winRatio").textContent = `${winRatio}%`;
+    const totalWins = gameData.winLossRatio.wins;
+    const winRatio = gameData.totalGames > 0 
+        ? ((totalWins / gameData.totalGames) * 100).toFixed(2) 
+        : 0;
+    document.getElementById("winRatio").textContent = `${winRatio}%`;
 
     document.getElementById("perfectPlayer").textContent = gameData.perfectGames.player;
     document.getElementById("perfectComputer").textContent = gameMode === 'multi' 
@@ -935,7 +899,7 @@ function displayGameData() {
         const li = document.createElement("li");
         li.textContent = `${game.winner} a gagné (${game.score.player}-${game.score.computer}) - ${game.duration.toFixed(2)}s`;
         if (game.isPerfect) {
-            li.textContent += " - Parfait !";
+            li.textContent += " - Parfait ! 🏆🏆";
         }
         lastGamesList.appendChild(li);
     });
