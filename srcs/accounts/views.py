@@ -178,9 +178,9 @@ def api_home(request):
 
         # Simuler les jeux populaires (à remplacer plus tard par de vraies données si nécessaire)
         featured_games = [
-            {"title": "Game 1", "image": "/static/images/game1.jpg", "url": "/game1"},
-            {"title": "Game 2", "image": "/static/images/game2.jpg", "url": "/game2"},
-            {"title": "Game 3", "image": "/static/images/game3.jpg", "url": "/game3"}
+            {"title": "Pong", "image": "/static/images/game1.jpg", "url": "/pong"},
+            {"title": "Pong Improved", "image": "/static/images/game2.jpg", "url": "/pong-ameliore"},
+            {"title": "Bomberman", "image": "/static/images/game3.jpg", "url": "/Bomberman"}
         ]
 
         # Activité récente basée sur les notifications

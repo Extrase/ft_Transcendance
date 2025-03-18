@@ -1,12 +1,7 @@
 
 // i18n
 
-// import { init } from "./Bomberman.js";
-// import { init } from "./pong-ameliore.js";
-// import { init } from "./pong.js";
-// import { destroyPong } from "./pong.js";
-// import { initPongImproved } from "./pong-ameliore";
-// import { initBomberman } from "./Bomberman";
+// Probleme connexion ~ connexion comportement page, rechargement profile au lieu de home
 let currentGame = null;
 export let bombover = true;
 export let pongadvover = true;
@@ -153,15 +148,6 @@ async function updateNavbar() {
 
             if (data.is_authenticated) {
                 navbar.innerHTML = `
-                    <li class="nav-item">
-                        <a class="nav-link" href="/pong" data-link data-i18n="nav.pong"></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/pong-ameliore" data-link data-i18n="nav.pong_improved"></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Bomberman" data-link data-i18n="nav.bomberman"></a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/" data-link data-i18n="nav.home"></a>
                     </li>
@@ -943,8 +929,7 @@ function generateHomePageContent(data) {
                                         <img src="${game.image}" class="card-img-top" alt="${game.title}">
                                         <div class="card-body">
                                             <h5 class="card-title">${game.title}</h5>
-                                            <p class="card-text">${game.description}</p>
-                                            <a href="${game.url}" class="btn btn-primary" data-i18n="home.play_now"></a>
+                                            <a href="${game.url}" class="btn btn-primary" data-link data-i18n="home.play_now"></a>
                                         </div>
                                     </div>
                                 </div>
@@ -952,19 +937,6 @@ function generateHomePageContent(data) {
                         </div>
                     </div>
                 </div>
-
-                <!-- Section Activité Récente -->
-                <div class="recent-activity card mb-4 shadow">
-                    <div class="card-body">
-                        <h2 class="card-title text-center mb-4" data-i18n="home.recent_activity"></h2>
-                        <ul class="list-group list-group-flush">
-                            ${data.recent_activity.map(activity => `
-                                <li class="list-group-item">${activity}</li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                </div>
-            </div>
         `;
     } else {
         return `
