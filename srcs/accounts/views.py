@@ -488,6 +488,7 @@ def index(request):
 @login_required
 def save_game_stats(request):
     """API pour sauvegarder les statistiques d'une partie"""
+    # Augmenter le niveau du joueur de 1 tout les 10 points
     if request.method == 'POST':
         try:
             print("Received save_game_stats request")

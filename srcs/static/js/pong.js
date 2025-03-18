@@ -764,6 +764,11 @@ function recordGameData(winner) {
     const endTime = Date.now();
     gameData.gameDuration = (endTime - gameData.gameStartTime) / 1000; // Durée en secondes
 
+    saveGameStats({
+        playerScore: game.player.score, 
+        computerScore: game.computer.score, 
+        difficulty: difficultySelect
+    });
     // Mettre à jour le nombre total de parties
     gameData.totalGames++;
 
@@ -828,6 +833,53 @@ function resetBall() {
     ball.speed.y = BALL_INITIAL_SPEED * (Math.random() > 0.5 ? 1 : -1);
     player.y = canvas.height / 2 - PLAYER_HEIGHT / 2;
     computer.y = canvas.height / 2 - PLAYER_HEIGHT / 2;
+}
+
+async function saveGameStats(gameData) {
+    try {
+        console.log('Saving game stats:', gameData);
+        
+        // Récupérer le token CSRF
+        const csrftoken = getCookie('csrftoken');
+        
+        // Mapper les différentes valeurs de difficulté
+        let difficultyValue = 'medium';
+        if (gameData.difficulty === 'es') difficultyValue = 'easy';
+        else if (gameData.difficulty === 'md') difficultyValue = 'medium';
+        else if (gameData.difficulty === 'hd') difficultyValue = 'hard';
+        
+        // Préparer les données à envoyer
+        const data = {
+            player_score: gameData.playerScore,
+            computer_score: gameData.computerScore,
+            difficulty: difficultyValue
+        };
+        
+        console.log('Sending data to server:', data);
+        
+        // Envoyer les données à l'API
+        const response = await fetch('/api/pong/save-stats/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error:', response.status, errorText);
+            throw new Error('Network response was not ok');
+        }
+        
+        const result = await response.json();
+        console.log('Game stats saved successfully:', result);
+        return result;
+    } catch (error) {
+        console.error('Error saving game stats:', error);
+    }
 }
 
 // Réinitialisation du jeu avec la touche 'b'
