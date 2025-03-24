@@ -47,7 +47,8 @@
         "start_color": "Start Color:",
         "end_color": "End Color:",
         "apply": "Apply",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "change_profile": "Change My profile"
     },
     "password_change": {
     "title": "Change Password",
@@ -73,5 +74,14 @@
     "play_now": "Play Now",
     "recent_activity": "Recent Activity",
     "login_prompt": "Please log in to access all features"
+  },
+  "update":{
+    "update_profile": "Update your profile",
+    "username":"Username :",
+    "email": "Email :",
+    "photo": "Profile Photo :",
+    "first_name": "First Name :",
+    "last_name": "Last Name :",
+    "updated": "Update" 
   }
 }

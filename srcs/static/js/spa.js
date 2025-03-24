@@ -30,12 +30,21 @@ function updateTranslations() {
   });
 }
 
-i18n.on('languageChanged', () => {
-  updateTranslations();
-  router.routes[window.location.pathname]?.();
+i18n.on('languageChanged', (lng) => {
+    if (lng !== currentLanguage) {
+        currentLanguage = lng;
+    updateTranslations();
+    router.routes[window.location.pathname]?.();
+    }
 });
 
+let currentLanguage = i18n.language;
 // app.js
+
+function normalizePath(path) {
+    if (path === '/') return '/';
+    return path.endsWith('/') ? path.slice(0, -1) : path;
+  }
 
 function checkAvatar(input) {
     const file = input.files[0];
@@ -55,12 +64,12 @@ const router = {
     routes: {},
 
     on(path, handler) {
-        const normalizedPath = path.endsWith('/') ? path.slice(0, -1) : path;
+        const normalizedPath = normalizePath(path);
         this.routes[normalizedPath] = handler;
     },
 
     navigate(path) {
-        const normalizedPath = path.endsWith('/') ? path.slice(0, -1) : path;
+        const normalizedPath = normalizePath(path);
         if (this.routes[normalizedPath]) {
             window.history.pushState({}, '', path);
             this.routes[normalizedPath]();
@@ -72,7 +81,7 @@ const router = {
 
     start() {
         window.addEventListener('popstate', () => {
-            const currentPath = window.location.pathname;
+            const currentPath = normalizePath(window.location.pathname);
             const normalizedPath = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
             
             if (this.routes[normalizedPath]) {
@@ -83,7 +92,7 @@ const router = {
             }
         });
     
-        const initialPath = window.location.pathname;
+        const initialPath = normalizePath(window.location.pathname);
         const normalizedInitialPath = initialPath.endsWith('/') ? initialPath.slice(0, -1) : initialPath;
         
         if (this.routes[normalizedInitialPath]) {
@@ -318,7 +327,7 @@ async function handleSignUp(event) {
         if (response.ok) {
             const data = await response.json();
             alert('Inscription réussie !');
-            window.location.href = data.redirect_url;
+            window.location.href = ('/');
         } else {
             const errorData = await response.json();
             document.getElementById('error-messages').style.display = 'block';
@@ -429,7 +438,7 @@ function generateProfileContent(data) {
                             <i class="fas fa-key"></i> <span data-i18n="profile.change_password"></span>
                         </a>
                         <a href="/auth/update_user/" class="profile-link custom-change-password-btn" data-link>
-                            <i class="fas fa-user-edit"></i> Change My Profile
+                            <i class="fas fa-user-edit"></i> <span data-i18n="profile.change_profile"></span>
                         </a>
                         ` : ''}
                         <a href="/auth/delete_user/" class="profile-link danger" data-link>
@@ -715,22 +724,22 @@ async function loadUpdateUserPage() {
 
         document.querySelector('#app').innerHTML = `
             <div class="signup-section">
-                <h2>Update your profile</h2>
+                <h2 data-i18n="update.update_profile"></h2>
                 <div id="error-messages" class="alert alert-danger" style="display: none;"></div>
                 <form id="signup-form" enctype="multipart/form-data">
                     <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
                     <div class="form-group">
-                        <label for="id_username">Username:</label>
+                        <label for="id_username" data-i18n="update.username"></label>
                         <input type="text" name="username" id="id_username" class="form-control"
                             value="${userData.username}" required>
                     </div>
                     <div class="form-group">
-                        <label for="id_email">Email:</label>
+                        <label for="id_email" data-i18n="update.email"></label>
                         <input type="email" name="email" id="id_email" class="form-control"
                             value="${userData.email}" required>
                     </div>
                     <div class="form-group">
-                        <label for="id_profile_photo">Profile Photo:</label>
+                        <label for="id_profile_photo" data-i18n="update.photo"></label>
                         <input type="file" id="id_profile_photo" name="profile_photo"
                             class="form-control" accept="image/*">
                         ${userData.profile_photo ?
@@ -738,16 +747,16 @@ async function loadUpdateUserPage() {
                                 style="max-width: 100px; margin-top: 10px;">` : ''}
                     </div>
                     <div class="form-group">
-                        <label for="id_first_name">First Name:</label>
+                        <label for="id_first_name" data-i18n="update.first_name"></label>
                         <input type="text" name="first_name" id="id_first_name" class="form-control"
                             value="${userData.first_name}" required>
                     </div>
                     <div class="form-group">
-                        <label for="id_last_name">Last Name:</label>
+                        <label for="id_last_name" data-i18n="update.last_name">:</label>
                         <input type="text" name="last_name" id="id_last_name" class="form-control"
                             value="${userData.last_name}" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Update</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="update.updated"></button>
                 </form>
             </div>
         `;
@@ -765,6 +774,7 @@ async function loadUpdateUserPage() {
         console.error('Error loading user data:', error);
         showMessage('Error loading user data', 'error');
     }
+    updateTranslations();
 }
 
 
@@ -1118,7 +1128,7 @@ router.on('/pong-ameliore', async () => {
         <div id="game">
             <canvas id="canvas" width="640" height="420"></canvas>
         </div>
-        <div id="powerUpDisplay" style="position: absolute; top: 20px; left: 20px; color: white; font-family: 'Press Start 2P', cursive; font-size: 16px;">
+        <div id="powerUpDisplay" style="position: absolute; top: 20px; left: 20px; color: white; font-family: 'Press Start 2P', cursive; font-size: 16px; display: none">
             Power-up actif : <span id="activePowerUpName">Aucun</span>
         </div>
         <div id="gameStats">
@@ -1161,7 +1171,7 @@ router.on('/Bomberman', async () => {
         bombover = false;
         const html = `<div id="content">
         <header>
-        <h1 id="title" class="titlePong">Bomberman<br/></h1>
+        <h1 id="title" class="titleBomb">Bomberman<br/></h1>
     </header>
 
     <main>
@@ -1225,7 +1235,6 @@ router.on('/Bomberman', async () => {
         </div>
         
         <div id="gameHistory">
-            <h2>Historique des dernières parties</h2>
             <ul id="lastGames" class="button"></ul>
         </div>
         <div id="endGameMenu" style="display: none;">

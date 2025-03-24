@@ -533,7 +533,8 @@ def save_game_stats(request):
 
             # Calculer le nouveau taux de victoire global pour le profil
             if player_stats.total_games > 0:
-                profile.win_rate = (player_stats.games_won / player_stats.total_games) * 100
+                ratio = (player_stats.games_won / player_stats.total_games) * 100
+                profile.win_rate = f"{ratio:.4g}%"
 
             # Ajouter les points au score total
             profile.total_score += data['player_score']

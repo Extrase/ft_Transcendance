@@ -47,7 +47,8 @@
         "start_color": "Couleur de départ :",
         "end_color": "Couleur de fin :",
         "apply": "Appliquer",
-        "cancel": "Annuler"
+        "cancel": "Annuler",
+        "change_profile": "Modifier le profil"
     },
     "password_change": {
     "title": "Modifier le mot de passe",
@@ -73,5 +74,14 @@
     "play_now": "Jouer maintenant",
     "recent_activity": "Activité récente",
     "login_prompt": "Connectez-vous pour accéder à toutes les fonctionnalités"
+  },
+  "update":{
+    "update_profile": "Modification du Profil",
+    "username":"Nom d'utilisateur :",
+    "email": "Email :",
+    "photo": "Photo de Profil :",
+    "first_name": "Prénom :",
+    "last_name": "Nom :",
+    "updated": "Mettre à jour" 
   }
 }

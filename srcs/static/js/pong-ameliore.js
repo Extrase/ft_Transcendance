@@ -453,6 +453,7 @@ function displayActivePowerUp(powerUpName) {
     const powerUpDisplay = document.getElementById("powerUpDisplay");
     const activePowerUpName = document.getElementById("activePowerUpName");
 
+    powerUpDisplay.style.display = "none"; 
     if (powerUpName) {
         powerUpDisplay.style.display = "block"; // Afficher l'élément
         activePowerUpName.textContent = powerUpName; // Mettre à jour le nom du power-up
