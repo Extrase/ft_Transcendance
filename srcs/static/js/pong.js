@@ -475,7 +475,7 @@ function keyUpHandler(event) {
 }
 // Déplacement de l'ordinateur
 function computerMoveEsMd() {
-    const SPEED = 5 * DIFFICULTY;
+    const SPEED = 5;
 
     const targetY = game.ball.y - PLAYER_HEIGHT / 2;
     const diff = targetY - game.computer.y;
@@ -658,8 +658,8 @@ function collide(player) {
             ball.speed.x *= -1.2;
             
             // Appliquer la limite de vitesse
-        ball.speed.x = Math.sign(ball.speed.x) * Math.min(Math.abs(ball.speed.x), MAX_BALL_SPEED);
-        ball.speed.y = Math.sign(ball.speed.y) * Math.min(Math.abs(ball.speed.y), MAX_BALL_SPEED);   
+        ball.speed.x = Math.sign(ball.speed.x) * Math.min(Math.abs(ball.speed.x), MAX_BALL_SPEED + DIFFICULTY);
+        ball.speed.y = Math.sign(ball.speed.y) * Math.min(Math.abs(ball.speed.y), MAX_BALL_SPEED + DIFFICULTY);   
             
             // Ajuster la direction en fonction du point d'impact
             const hitPosition = (yAtCollision - player.y) / PLAYER_HEIGHT;
@@ -822,7 +822,7 @@ function changeDirection(paddleY, yAtCollision) {
     const normalizedHit = hitPosition / PLAYER_HEIGHT;
     const angle = normalizedHit * Math.PI / 2; // Angle entre -π/2 et π/2
     game.ball.speed.y = Math.sin(angle) * 5; // Ajustez la vitesse si nécessaire
-    game.ball.speed.y = Math.sign(game.ball.speed.y) * Math.min(Math.abs(game.ball.speed.y), MAX_BALL_SPEED);
+    game.ball.speed.y = Math.sign(game.ball.speed.y) * Math.min(Math.abs(game.ball.speed.y), MAX_BALL_SPEED + DIFFICULTY);
 }
 
 function resetBall() {

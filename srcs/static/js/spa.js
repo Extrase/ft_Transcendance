@@ -292,7 +292,7 @@ function loadSignUpPage() {
             <button type="submit" class="btn btn-primary" data-i18n="signup.submit"></button>
         </form>
         <p data-i18n="signup.have_account"></p>
-        <a href="#" data-link="/login" data-i18n="signup.login_link"></a>
+        <a href="/login" data-link="/login" data-i18n="signup.login_link"></a>
     </div>
     `;
 
