@@ -107,46 +107,23 @@ def add_achievement(request):
 
 @login_required
 def add_friend(request, username):
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # Vérifie si c'est une requête AJAX
-        # Vérifier si l'utilisateur essaie de s'ajouter lui-même
-        if username == request.user.username:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Vous ne pouvez pas vous ajouter vous-même en ami'
-            }, status=400)
+    try:
+        friend_user = User.objects.get(username=username)
+        friend_profile = Profile.objects.get(user=friend_user)
+        current_user_profile = Profile.objects.get(user=request.user)
 
-        try:
-            friend_user = User.objects.get(username=username)
-            friend_profile = Profile.objects.get(user=friend_user)
-            current_user_profile = Profile.objects.get(user=request.user)
+        if friend_profile not in current_user_profile.friends.all():
+            current_user_profile.friends.add(friend_profile)
+            messages.success(request, f'{username} has been added to your friends')
+        else:
+            messages.info(request, f'{username} is already in your friends list')
 
-            if friend_profile not in current_user_profile.friends.all():
-                current_user_profile.friends.add(friend_profile)
-                return JsonResponse({
-                    'status': 'success',
-                    'message': f'{username} a été ajouté à vos amis'
-                })
-            else:
-                return JsonResponse({
-                    'status': 'info',
-                    'message': f'{username} est déjà dans votre liste d\'amis'
-                })
+    except User.DoesNotExist:
+        messages.error(request, 'User not found')
+    except Profile.DoesNotExist:
+        messages.error(request, 'Profile not found')
 
-        except User.DoesNotExist:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Utilisateur non trouvé'
-            }, status=404)
-        except Profile.DoesNotExist:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Profil non trouvé'
-            }, status=404)
-
-    return JsonResponse({
-        'status': 'error',
-        'message': 'Requête invalide'
-    }, status=400)
+    return redirect('profile')
 
 @login_required
 def remove_friend(request, username):
@@ -557,7 +534,7 @@ def save_game_stats(request):
             # Calculer le nouveau taux de victoire global pour le profil
             if player_stats.total_games > 0:
                 ratio = (player_stats.games_won / player_stats.total_games) * 100
-                profile.win_rate = f"{ratio:.4g}%"
+                profile.win_rate = ratio
 
             # Ajouter les points au score total
             profile.total_score += data['player_score']
@@ -568,11 +545,11 @@ def save_game_stats(request):
             profile.save()
 
             return JsonResponse({'success': True, 'message': 'Game stats saved successfully'})
-
+#
         except Exception as e:
             print(f"Error saving game stats: {e}")
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
-
+#
     return JsonResponse({'success': False, 'error': 'Only POST method is allowed'}, status=405)
 
 # Ajout d'une API pour récupérer les stats de Pong pour la page de profil
@@ -682,7 +659,7 @@ def update_user(request):
 
         form = UpdateUserForm(request.POST, request.FILES, instance=request.user)
 
-        if (form.data.get('username') != request.user.username and
+        if (form.data.get('username') != request.user.username and 
                 User.objects.filter(username=form.data.get('username')).exists()):
                 form.add_error('username', 'Ce nom d\'utilisateur est déjà pris.')
                 return JsonResponse({
@@ -690,8 +667,8 @@ def update_user(request):
                     'detail': 'Ce nom d\'utilisateur est déjà pris.',
                     'errors': form.errors
                 }, status=400)
-
-        if (form.data.get('email') != request.user.email and
+        
+        if (form.data.get('email') != request.user.email and 
                 User.objects.filter(email=form.data.get('email')).exists()):
                 form.add_error('email', 'Cet email d\'utilisateur est déjà pris.')
                 return JsonResponse({
@@ -699,7 +676,7 @@ def update_user(request):
                     'detail': 'Cet email d\'utilisateur est déjà pris.',
                     'errors': form.errors
                 }, status=400)
-
+        
         if form.is_valid():
             form.save()
 

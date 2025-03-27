@@ -22,6 +22,10 @@ WORKDIR /code
 # Install Python dependencies
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn
+
+# Create directories for static and media files
+RUN mkdir -p /code/staticfiles /code/mediafiles
 
 # Expose port
 EXPOSE 8000

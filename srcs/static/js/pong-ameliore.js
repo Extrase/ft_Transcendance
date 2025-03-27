@@ -60,7 +60,7 @@ let DIFFICULTY = 1;
 let isGameOver = false;
 let gameMode = 'single'; // 'single' ou 'multi'
 
-canvas = document.getElementById('canvas');
+let canvas = document.getElementById('canvas');
     if (!canvas) {
         console.error("Canvas not found!");
         return;
