@@ -1,8 +1,19 @@
-
+import { pongover } from "./spa.js";
 // ----------------------------------------------------
 // Déclaration des éléments DOM utilisés dans le script
 // ----------------------------------------------------
 
+let gameData = {
+    totalGames: 0, // Nombre total de parties jouées
+    totalScore: { player: 0, computer: 0 }, // Score total cumulé
+    winLossRatio: { wins: 0, losses: 0 }, // Taux de victoires/défaites
+    perfectGames: { player: 0, computer: 0 }, // Nombre de parties parfaites
+    lastGames: [], // Historique des dernières parties
+    gameStartTime: null, // Heure de début de la partie
+    gameDuration: null, // Durée de la partie
+};
+
+export function init(){
 const firstInstruct = document.getElementById("firstInstruct");
 const secondInstruct = document.getElementById("secondInstruct");
 const menuLink = document.getElementById("menuLink");
@@ -37,18 +48,57 @@ const quitStButton = document.getElementById("qsButton");
 
 const title = document.getElementById("title");
 const pong = document.getElementById("game");
-const MAX_BALL_SPEED = 8; // Vitesse maximale autorisée
+const MAX_BALL_SPEED = 2; // Vitesse maximale autorisée
+
+let DIFFICULTY = 1;
+let isGameOver = false;
 
 
+const PLAYER_HEIGHT = 80;
+const PLAYER_WIDTH = 4;
+const BALL_RADIUS = 5;
+const BALL_INITIAL_SPEED = 2;
+const COMPUTER_SPEED_FACTOR = 0.85;
+const PLAYER_SPEED = 5; // Vitesse de déplacement du joueur
+const COLORS = {
+    background: '#262324',
+    paddle: '#fcfcec',
+    ball: '#fcfcec',
+    line: '#fcfcec'
+};
+const winnerScore = 3;
 let currentFocus = 0;
 let bubbleFocus = 0;
 let modeFocus = 0;
 let difficultyFocus = 0;
+canvas = document.getElementById('canvas');
+    if (!canvas) {
+        console.error("Canvas not found!");
+        return;
+    }
+let context = canvas.getContext('2d');
+let anim;
+let isGamming = false;
+let isUpPressed = false;
+let isDownPressed = false;
 
 let difficultySelect = "md";
 let gameMode = 'single'; // 'single' ou 'multi'
 let isWPressed = false;
 let isSPressed = false;
+game = {
+    player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+    computer: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+    ball: {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        prevX: canvas.width / 2, // precedent emplacement
+        prevY: canvas.height / 2, // precedent emplacement
+        r: BALL_RADIUS,
+        speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED },
+        lastHit: null
+    }
+};
 
 let textInterval;
 
@@ -57,16 +107,6 @@ let focusIndexes = {
     bubble: { value: 0 },
     mode: { value: 0 },
     difficulty: { value: 0 }
-};
-
-let gameData = {
-    totalGames: 0, // Nombre total de parties jouées
-    totalScore: { player: 0, computer: 0 }, // Score total cumulé
-    winLossRatio: { wins: 0, losses: 0 }, // Taux de victoires/défaites
-    perfectGames: { player: 0, computer: 0 }, // Nombre de parties parfaites
-    lastGames: [], // Historique des dernières parties
-    gameStartTime: null, // Heure de début de la partie
-    gameDuration: null, // Durée de la partie
 };
 
 // Texte d'info pour l'info-bulle
@@ -200,15 +240,16 @@ function playGame() {
 /**
  * Ouvre/ferme le menu lorsque l'on clique sur "INSERT COIN"
  */
-menuLink.addEventListener("click", function(event) {
+function handleMenuLinkClick(event) {
     event.preventDefault();
     toggleMenu();
-});
+}
+menuLink.addEventListener("click", handleMenuLinkClick);
 
 /**
  * Fermeture de l'info-bulle en cliquant sur "Close"
  */
-closeBubble.addEventListener("click", function() {
+function handleCloseBubble() {
     enableMenu();
     infoBubble.style.display = 'none';
     infoButton.focus();
@@ -218,69 +259,82 @@ closeBubble.addEventListener("click", function() {
     if (textInterval) {
         clearInterval(textInterval);
     }
-});
+};
+closeBubble.addEventListener("click", handleCloseBubble);
 
-quitButton.addEventListener("click", function() {
+function handleQuitButton() {
     selectMenu(menuLink, menu, null, null);
-})
+}
+quitButton.addEventListener("click", handleQuitButton);
 
 /**
  * Ouverture de l'info-bulle en cliquant sur "INFO"
  */
-infoButton.addEventListener("click", function() {
+function handleInfoButton() {
     toggleInfoBubble();
-});
+};
+infoButton.addEventListener("click", handleInfoButton);
 
 /**
  * Action pour "More Info"
  */
-moreBubble.addEventListener("click", function () {
+function handleMoreBubble() {
     window.open("https://en.wikipedia.org/wiki/Pong", "_blank");
-});
+};
+moreBubble.addEventListener("click", handleMoreBubble);
 
-moreBubble.addEventListener("focus", function () {
+function handleMoreBubbleFocus() {
     moreBubble.setAttribute('title', 'Opens Pong Wikipedia page in a new window.');
-});
+};
+moreBubble.addEventListener("focus", handleMoreBubbleFocus);
 
-playButton.addEventListener("click", function() {
+function handlePlayButton() {
     selectMenu(menuMode, menu, modeFocus, modeItems)
-})
+}
+playButton.addEventListener("click", handlePlayButton);
 
-singleButton.addEventListener("click", function() {
+function handleSingleButton() {
     gameMode = 'single';
     updateStatsLabels();
     selectMenu(menuDifficulty, menuMode, difficultyFocus, difficultyItems)
-})
+}
+singleButton.addEventListener("click", handleSingleButton);
 
-quitMButton.addEventListener("click", function() {
+function handleQuitMButton() {
     selectMenu(menu, menuMode, currentFocus, menuItems)
-})
+}
+quitMButton.addEventListener("click", handleQuitMButton);
 
-multiButton.addEventListener("click", function() {
+function handleMultiButton() {
     gameMode = 'multi';
     difficultySelect = "md"; // difficulté par défaut
     updateStatsLabels();
     playGame();
-});
+};
+multiButton.addEventListener("click", handleMultiButton);
 
-easyButton.addEventListener("click", function() {
+function handleEasyButton() {
     difficultySelect = "es";
     playGame();
-})
+}
+easyButton.addEventListener("click", handleEasyButton);
 
-mediumButton.addEventListener("click", function() {
+function handleMediumButton() {
     difficultySelect = "md";
     playGame();
-})
+}
+mediumButton.addEventListener("click", handleMediumButton);
 
-hardMButton.addEventListener("click", function() {
+function handleHardMButton() {
     difficultySelect = "hd";
     playGame();
-})
+}
+hardMButton.addEventListener("click", handleHardMButton);
 
-quitDMButton.addEventListener("click", function() {
+function handleQuitDMButton() {
     selectMenu(menuMode, menuDifficulty, modeFocus, modeItems)
-})
+}
+quitDMButton.addEventListener("click", handleQuitDMButton);
 
 /**
  * Gestion des touches directionnelles pour naviguer dans le menu et l'info-bulle
@@ -298,7 +352,7 @@ function handleArrowNavigation(event, focusIndex, items) {
 }
 
 // Gestionnaire d'événements
-document.addEventListener("keydown", function(event) {
+function handleDocumentKeydown(event) {
     if (menu.style.display === "block" && infoBubble.style.display !== "block") { 
         // Navigation dans le menu
         handleArrowNavigation(event, focusIndexes.menu, menuItems);
@@ -354,7 +408,9 @@ document.addEventListener("keydown", function(event) {
         stop();
         toggleMenu();
     }
-});
+};
+document.addEventListener("keydown", handleDocumentKeydown);
+
 
 /**
  * PONG
@@ -363,41 +419,11 @@ document.addEventListener("keydown", function(event) {
 'use strict';
 
 // Configuration des constantes
-let DIFFICULTY = 1;
-let isGameOver = false;
 
-
-const PLAYER_HEIGHT = 80;
-const PLAYER_WIDTH = 4;
-const BALL_RADIUS = 5;
-const BALL_INITIAL_SPEED = 2;
-const COMPUTER_SPEED_FACTOR = 0.85;
-const PLAYER_SPEED = 5; // Vitesse de déplacement du joueur
-const COLORS = {
-    background: '#262324',
-    paddle: '#fcfcec',
-    ball: '#fcfcec',
-    line: '#fcfcec'
-};
-const winnerScore = 3;
-
-let canvas;
-let context;
-let anim;
-let game;
-let isGamming = false;
-let isUpPressed = false;
-let isDownPressed = false;
 
 // Initialisation du jeu
 function initializeGame() {
-    canvas = document.getElementById('canvas');
-    if (!canvas) {
-        console.error("Canvas not found!");
-        return;
-    }
     gameData.gameStartTime = Date.now();
-    context = canvas.getContext('2d');
 
     game = {
         player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
@@ -449,7 +475,7 @@ function keyUpHandler(event) {
 }
 // Déplacement de l'ordinateur
 function computerMoveEsMd() {
-    const SPEED = 5 * DIFFICULTY;
+    const SPEED = 5;
 
     const targetY = game.ball.y - PLAYER_HEIGHT / 2;
     const diff = targetY - game.computer.y;
@@ -632,8 +658,8 @@ function collide(player) {
             ball.speed.x *= -1.2;
             
             // Appliquer la limite de vitesse
-        ball.speed.x = Math.sign(ball.speed.x) * Math.min(Math.abs(ball.speed.x), MAX_BALL_SPEED);
-        ball.speed.y = Math.sign(ball.speed.y) * Math.min(Math.abs(ball.speed.y), MAX_BALL_SPEED);   
+        ball.speed.x = Math.sign(ball.speed.x) * Math.min(Math.abs(ball.speed.x), MAX_BALL_SPEED + DIFFICULTY);
+        ball.speed.y = Math.sign(ball.speed.y) * Math.min(Math.abs(ball.speed.y), MAX_BALL_SPEED + DIFFICULTY);   
             
             // Ajuster la direction en fonction du point d'impact
             const hitPosition = (yAtCollision - player.y) / PLAYER_HEIGHT;
@@ -652,6 +678,7 @@ function collide(player) {
                 game.player.score++;
                 gameData.totalScore.player++;
             }
+            displayGameData();
             resetBall();
             if (game.computer.score === winnerScore || game.player.score === winnerScore) {
                 let winner;
@@ -662,23 +689,45 @@ function collide(player) {
                 }
                 cancelAnimationFrame(anim);
                 drawWinningMessage(winner);
-                isGameOver = true;
-                recordGameData(winner);
+                endGame(winner);
             }
         }
     }
 }
 
+function endGame(winner) {
+    if (isGameOver) return;
+    isGameOver = true;
+    if (pongover === true) return;
+    
+    cancelAnimationFrame(anim);
+    window.removeEventListener('keydown', keyDownHandler);
+    window.removeEventListener('keyup', keyUpHandler);
+
+    if (pongover === true) return;
+    recordGameData(winner);
+    if (pongover === true) return;
+    displayGameData();
+
+
+    // Gestion des boutons
+    window.addEventListener('keydown', handleWindowKeydown);
+}
+
 function displayGameData() {
+    if (pongover === true) return;
     document.getElementById("totalGames").textContent = gameData.totalGames;
     document.getElementById("totalPlayerScore").textContent = gameData.totalScore.player;
     document.getElementById("totalComputerScore").textContent = gameData.totalScore.computer;
 
-    const winRatio = (gameData.winLossRatio.wins / gameData.totalGames * 100).toFixed(2);
+    const totalWins = gameData.winLossRatio.wins;
+    const winRatio = gameData.totalGames > 0 
+        ? ((totalWins / gameData.totalGames) * 100).toFixed(2) 
+        : 0;
     document.getElementById("winRatio").textContent = `${winRatio}%`;
 
     document.getElementById("perfectPlayer").textContent = gameData.perfectGames.player;
-document.getElementById("perfectComputer").textContent = gameMode === 'multi' 
+    document.getElementById("perfectComputer").textContent = gameMode === 'multi' 
     ? gameData.perfectGames.computer 
     : gameData.perfectGames.computer; // Les données restent les mêmes, seul le libellé change via updateStatsLabels()
 
@@ -689,13 +738,14 @@ document.getElementById("perfectComputer").textContent = gameMode === 'multi'
         const li = document.createElement("li");
         li.textContent = `${game.winner} a gagné (${game.score.player}-${game.score.computer}) - ${game.duration.toFixed(2)}s`;
         if (game.isPerfect) {
-            li.textContent += " - Parfait !";
+            li.textContent += " - Parfait ! 🏆🏆";
         }
         lastGamesList.appendChild(li);
     });
 }
 
 function updateStatsLabels() {
+    if (pongover === true) return;
     if (gameMode === 'multi') {
         document.getElementById('playerLabel').textContent = 'Joueur 1 :';
         document.getElementById('opponentLabel').textContent = 'Joueur 2 :';
@@ -714,15 +764,23 @@ function recordGameData(winner) {
     const endTime = Date.now();
     gameData.gameDuration = (endTime - gameData.gameStartTime) / 1000; // Durée en secondes
 
+    saveGameStats({
+        playerScore: game.player.score, 
+        computerScore: game.computer.score, 
+        difficulty: difficultySelect
+    });
     // Mettre à jour le nombre total de parties
     gameData.totalGames++;
 
     // Mettre à jour le taux de victoires/défaites
-    if (winner === "Le joueur") {
-        gameData.winLossRatio.wins++;
-    } else {
-        gameData.winLossRatio.losses++;
-    }
+    if (gameMode === 'single')
+        {
+            if (winner === "Le joueur") {
+                gameData.winLossRatio.wins++;
+            } else {
+                gameData.winLossRatio.losses++;
+            }
+        }
 
     // Vérifier si c'est une partie parfaite
     if (gameMode === 'single') {
@@ -755,6 +813,7 @@ function recordGameData(winner) {
     }
 
     // Afficher les données mises à jour
+    if (pongover === true) return;
     displayGameData();
 }
 
@@ -763,7 +822,7 @@ function changeDirection(paddleY, yAtCollision) {
     const normalizedHit = hitPosition / PLAYER_HEIGHT;
     const angle = normalizedHit * Math.PI / 2; // Angle entre -π/2 et π/2
     game.ball.speed.y = Math.sin(angle) * 5; // Ajustez la vitesse si nécessaire
-    game.ball.speed.y = Math.sign(game.ball.speed.y) * Math.min(Math.abs(game.ball.speed.y), MAX_BALL_SPEED);
+    game.ball.speed.y = Math.sign(game.ball.speed.y) * Math.min(Math.abs(game.ball.speed.y), MAX_BALL_SPEED + DIFFICULTY);
 }
 
 function resetBall() {
@@ -776,11 +835,58 @@ function resetBall() {
     computer.y = canvas.height / 2 - PLAYER_HEIGHT / 2;
 }
 
+async function saveGameStats(gameData) {
+    try {
+        console.log('Saving game stats:', gameData);
+        
+        // Récupérer le token CSRF
+        const csrftoken = getCookie('csrftoken');
+        
+        // Mapper les différentes valeurs de difficulté
+        let difficultyValue = 'medium';
+        if (gameData.difficulty === 'es') difficultyValue = 'easy';
+        else if (gameData.difficulty === 'md') difficultyValue = 'medium';
+        else if (gameData.difficulty === 'hd') difficultyValue = 'hard';
+        
+        // Préparer les données à envoyer
+        const data = {
+            player_score: gameData.playerScore,
+            computer_score: gameData.computerScore,
+            difficulty: difficultyValue
+        };
+        
+        console.log('Sending data to server:', data);
+        
+        // Envoyer les données à l'API
+        const response = await fetch('/api/pong/save-stats/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error:', response.status, errorText);
+            throw new Error('Network response was not ok');
+        }
+        
+        const result = await response.json();
+        console.log('Game stats saved successfully:', result);
+        return result;
+    } catch (error) {
+        console.error('Error saving game stats:', error);
+    }
+}
+
 // Réinitialisation du jeu avec la touche 'b'
 // ----------------------------------------------------
 // Gestion des événements globaux
 // ----------------------------------------------------
-window.addEventListener('keydown', (event) => {
+function handleWindowKeydown(event) {
     if (isGameOver) {
         if (event.key === 'b') {
             // Redémarrer le jeu
@@ -794,51 +900,54 @@ window.addEventListener('keydown', (event) => {
             isGameOver = false; // Réinitialiser l'état du jeu
         }
     }
-});
+};
+window.addEventListener('keydown', handleWindowKeydown);
 
-function initializeBackgroundGame() {
-    const bgCanvas = document.getElementById('backgroundCanvas');
-    const bgContext = bgCanvas.getContext('2d');
-    bgCanvas.width = 640;
-    bgCanvas.height = 420;
 
-    const bgGame = {
-        player: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
-        computer: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
-        ball: {
-            x: bgCanvas.width / 2,
-            y: bgCanvas.height / 2,
-            r: BALL_RADIUS,
-            speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED }
-        }
-    };
+// function initializeBackgroundGame() {
+//     if (pongover === true) return;
+//     const bgCanvas = document.getElementById('backgroundCanvas');
+//     const bgContext = bgCanvas.getContext('2d');
+//     bgCanvas.width = 640;
+//     bgCanvas.height = 420;
 
-    function drawBackground() {
-        bgContext.fillStyle = COLORS.background;
-        bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+//     const bgGame = {
+//         player: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
+//         computer: { y: bgCanvas.height / 2 - PLAYER_HEIGHT / 2 },
+//         ball: {
+//             x: bgCanvas.width / 2,
+//             y: bgCanvas.height / 2,
+//             r: BALL_RADIUS,
+//             speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED }
+//         }
+//     };
 
-        // Dessinez les paddles et la balle
-        drawPaddle(bgContext, 10, bgGame.player.y);
-        drawPaddle(bgContext, bgCanvas.width - PLAYER_WIDTH - 10, bgGame.computer.y);
-        drawBall(bgContext, bgGame.ball);
-    }
+//     function drawBackground() {
+//         bgContext.fillStyle = COLORS.background;
+//         bgContext.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
 
-    function updateBackgroundGame() {
-        // Déplace les joueurs bots
-        moveBot(bgGame.player, bgGame.ball, bgCanvas.height);
-        moveBot(bgGame.computer, bgGame.ball, bgCanvas.height);
+//         // Dessinez les paddles et la balle
+//         drawPaddle(bgContext, 10, bgGame.player.y);
+//         drawPaddle(bgContext, bgCanvas.width - PLAYER_WIDTH - 10, bgGame.computer.y);
+//         drawBall(bgContext, bgGame.ball);
+//     }
 
-        // Déplace la balle
-        ballMove();
+//     function updateBackgroundGame() {
+//         // Déplace les joueurs bots
+//         moveBot(bgGame.player, bgGame.ball, bgCanvas.height);
+//         moveBot(bgGame.computer, bgGame.ball, bgCanvas.height);
 
-        // Redessinez la scène
-        drawBackground();
+//         // Déplace la balle
+//         ballMove();
 
-        requestAnimationFrame(updateBackgroundGame);
-    }
+//         // Redessinez la scène
+//         drawBackground();
 
-    updateBackgroundGame();
-}
+//         requestAnimationFrame(updateBackgroundGame);
+//     }
+
+//     updateBackgroundGame();
+// }
 
 function moveBot(player, ball, canvasHeight) {
     const targetY = ball.y - PLAYER_HEIGHT / 2;
@@ -850,5 +959,5 @@ function moveBot(player, ball, canvasHeight) {
 }
 
 updateStatsLabels();
-initializeBackgroundGame();
-z
+// initializeBackgroundGame();
+}

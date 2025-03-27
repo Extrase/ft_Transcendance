@@ -1,5 +1,11 @@
 // i18n
 
+// Probleme connexion ~ connexion comportement page, rechargement profile au lieu de home
+let currentGame = null;
+export let bombover = true;
+export let pongadvover = true;
+export let pongover = true;
+
 const i18n = i18next.createInstance();
 
 i18n
@@ -23,12 +29,21 @@ function updateTranslations() {
   });
 }
 
-i18n.on('languageChanged', () => {
-  updateTranslations();
-  router.routes[window.location.pathname]?.();
+i18n.on('languageChanged', (lng) => {
+    if (lng !== currentLanguage) {
+        currentLanguage = lng;
+    updateTranslations();
+    router.routes[window.location.pathname]?.();
+    }
 });
 
+let currentLanguage = i18n.language;
 // app.js
+
+function normalizePath(path) {
+    if (path === '/') return '/';
+    return path.endsWith('/') ? path.slice(0, -1) : path;
+  }
 
 function checkAvatar(input) {
     const file = input.files[0];
@@ -48,12 +63,12 @@ const router = {
     routes: {},
 
     on(path, handler) {
-        const normalizedPath = path.endsWith('/') ? path.slice(0, -1) : path;
+        const normalizedPath = normalizePath(path);
         this.routes[normalizedPath] = handler;
     },
 
     navigate(path) {
-        const normalizedPath = path.endsWith('/') ? path.slice(0, -1) : path;
+        const normalizedPath = normalizePath(path);
         if (this.routes[normalizedPath]) {
             window.history.pushState({}, '', path);
             this.routes[normalizedPath]();
@@ -65,7 +80,7 @@ const router = {
 
     start() {
         window.addEventListener('popstate', () => {
-            const currentPath = window.location.pathname;
+            const currentPath = normalizePath(window.location.pathname);
             const normalizedPath = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
 
             if (this.routes[normalizedPath]) {
@@ -75,8 +90,8 @@ const router = {
                 this.navigate('/');
             }
         });
-
-        const initialPath = window.location.pathname;
+      
+        const initialPath = normalizePath(window.location.pathname);
         const normalizedInitialPath = initialPath.endsWith('/') ? initialPath.slice(0, -1) : initialPath;
 
         if (this.routes[normalizedInitialPath]) {
@@ -141,15 +156,6 @@ async function updateNavbar() {
 
             if (data.is_authenticated) {
                 navbar.innerHTML = `
-                    <li class="nav-item">
-                        <a class="nav-link" href="/pong" data-link data-i18n="nav.pong"></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/pong-ameliore" data-link data-i18n="nav.pong_improved"></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Bomberman" data-link data-i18n="nav.bomberman"></a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/" data-link data-i18n="nav.home"></a>
                     </li>
@@ -223,6 +229,9 @@ function getCookie(name) {
 
 // CHARGER DYNAMIQUEMENT LA PAGE D'ACCUEIL
 function loadHomePage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     fetch('/api/home/')
     .then(response => response.json())
     .then(data => {
@@ -233,6 +242,9 @@ function loadHomePage() {
 }
 
 function loadSignUpPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const csrfToken = getCookie('csrftoken');
 
     const signUpHTML = `
@@ -279,7 +291,7 @@ function loadSignUpPage() {
             <button type="submit" class="btn btn-primary" data-i18n="signup.submit"></button>
         </form>
         <p data-i18n="signup.have_account"></p>
-        <a href="#" data-link="/login" data-i18n="signup.login_link"></a>
+        <a href="/login" data-link="/login" data-i18n="signup.login_link"></a>
     </div>
     `;
 
@@ -314,7 +326,7 @@ async function handleSignUp(event) {
         if (response.ok) {
             const data = await response.json();
             alert('Inscription réussie !');
-            window.location.href = data.redirect_url;
+            window.location.href = ('/');
         } else {
             const errorData = await response.json();
             document.getElementById('error-messages').style.display = 'block';
@@ -327,6 +339,9 @@ async function handleSignUp(event) {
 }
 
 async function loadProfilePage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     try {
         const response = await fetch('/api/profile/');
         if (!response.ok) throw new Error('Failed to fetch profile data');
@@ -422,7 +437,13 @@ function generateProfileContent(data) {
                         <a href="/change-password" class="profile-link custom-change-password-btn" data-link>
                             <i class="fas fa-key"></i> <span data-i18n="profile.change_password"></span>
                         </a>
+                        <a href="/auth/update_user/" class="profile-link custom-change-password-btn" data-link>
+                            <i class="fas fa-user-edit"></i> <span data-i18n="profile.change_profile"></span>
+                        </a>
                         ` : ''}
+                        <a href="/auth/delete_user/" class="profile-link danger" data-link>
+                            <i class="fas fa-user-slash"></i> Delete Account
+                        </a>
                         <button class="profile-link danger" id="logoutButton">
                             <i class="fas fa-sign-out-alt"></i> <span data-i18n="nav.logout"></span>
                         </button>
@@ -596,6 +617,9 @@ function saveProfileColors(startColor, endColor) {
 }
 
 function loadLoginPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const csrfToken = getCookie('csrftoken');
 
     const loginHTML = `
@@ -635,6 +659,9 @@ function loadLoginPage() {
 }
 
 function loadChangePasswordPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const csrfToken = getCookie('csrftoken');
 
     const changePasswordHTML = `
@@ -688,6 +715,9 @@ function loadChangePasswordPage() {
 }
 
 function loadPasswordChangeSuccessPage() {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
     const successHTML = `
         <div class="success-section">
             <h2 data-i18n="password_change.success.title"></h2>
@@ -698,6 +728,160 @@ function loadPasswordChangeSuccessPage() {
 
     document.querySelector('#app').innerHTML = successHTML;
     updateTranslations();
+}
+
+async function loadUpdateUserPage() {
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+        // Récupérer les données de l'utilisateur via la nouvelle API
+        const response = await fetch('/api/user-data/');
+        const userData = await response.json();
+
+        document.querySelector('#app').innerHTML = `
+            <div class="signup-section">
+                <h2 data-i18n="update.update_profile"></h2>
+                <div id="error-messages" class="alert alert-danger" style="display: none;"></div>
+                <form id="signup-form" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <div class="form-group">
+                        <label for="id_username" data-i18n="update.username"></label>
+                        <input type="text" name="username" id="id_username" class="form-control"
+                            value="${userData.username}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_email" data-i18n="update.email"></label>
+                        <input type="email" name="email" id="id_email" class="form-control"
+                            value="${userData.email}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_profile_photo" data-i18n="update.photo"></label>
+                        <input type="file" id="id_profile_photo" name="profile_photo"
+                            class="form-control" accept="image/*">
+                        ${userData.profile_photo ?
+                            `<img src="${userData.profile_photo}" alt="Current profile photo"
+                                style="max-width: 100px; margin-top: 10px;">` : ''}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_first_name" data-i18n="update.first_name"></label>
+                        <input type="text" name="first_name" id="id_first_name" class="form-control"
+                            value="${userData.first_name}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_last_name" data-i18n="update.last_name">:</label>
+                        <input type="text" name="last_name" id="id_last_name" class="form-control"
+                            value="${userData.last_name}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-i18n="update.updated"></button>
+                </form>
+            </div>
+        `;
+
+        // Ajouter les écouteurs d'événements
+        document.querySelector('#signup-form').addEventListener('submit', handleUpdateUser);
+
+        const avatarInput = document.querySelector('#id_profile_photo');
+        if (avatarInput) {
+            avatarInput.addEventListener('change', function() {
+                checkAvatar(avatarInput);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showMessage('Error loading user data', 'error');
+    }
+    updateTranslations();
+}
+
+
+async function handleUpdateUser(event) {
+    event.preventDefault();
+
+    const form = document.querySelector('#signup-form');
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('/auth/update_user/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+
+        if (response.ok) {
+            alert('Mis à jour du profil réussi !');
+            router.navigate('/profile');
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-messages').style.display = 'block';
+            document.getElementById('error-messages').innerText = errorData.detail || 'Erreur inconnue';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la mis à jour du profil utilisaateur :", error);
+        alert('Une erreur est survenue lors de la mis à jour du profil utilisaateur.');
+    }
+}
+
+async function handleDeleteUser(event) {
+    event.preventDefault();
+
+    if (!confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/auth/delete_user/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            alert('Compte supprimé avec succès !');
+            window.location.href = '/login';  // Redirection directe
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-messages').style.display = 'block';
+            document.getElementById('error-messages').innerText = errorData.detail || 'Erreur inconnue';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la suppression du compte :", error);
+        alert('Une erreur est survenue lors de la suppression du compte.');
+    }
+}
+
+async function loadDeleteUserPage() {
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+        // Récupérer les données de l'utilisateur via la nouvelle API
+        const response = await fetch('/api/user-data/');
+        const userData = await response.json();
+
+        document.querySelector('#app').innerHTML = `
+            <div class="signup-section">
+                <h2>Delete your account</h2>
+                <div id="error-messages" class="alert alert-danger" style="display: none;"></div>
+                    <a href="/profile" class="profile-link custom-change-password-btn" data-link>
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                <form id="signup-form" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <button type="submit" class="btn btn-primary">Delete</button>
+                </form>
+            </div>
+        `;
+
+        // Ajouter les écouteurs d'événements
+        document.querySelector('#signup-form').addEventListener('submit', handleDeleteUser);
+
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showMessage('Error loading user data', 'error');
+    }
 }
 
 
@@ -771,8 +955,7 @@ function generateHomePageContent(data) {
                                         <img src="${game.image}" class="card-img-top" alt="${game.title}">
                                         <div class="card-body">
                                             <h5 class="card-title">${game.title}</h5>
-                                            <p class="card-text">${game.description}</p>
-                                            <a href="${game.url}" class="btn btn-primary" data-i18n="home.play_now"></a>
+                                            <a href="${game.url}" class="btn btn-primary" data-link data-i18n="home.play_now"></a>
                                         </div>
                                     </div>
                                 </div>
@@ -780,19 +963,6 @@ function generateHomePageContent(data) {
                         </div>
                     </div>
                 </div>
-
-                <!-- Section Activité Récente -->
-                <div class="recent-activity card mb-4 shadow">
-                    <div class="card-body">
-                        <h2 class="card-title text-center mb-4" data-i18n="home.recent_activity"></h2>
-                        <ul class="list-group list-group-flush">
-                            ${data.recent_activity.map(activity => `
-                                <li class="list-group-item">${activity}</li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                </div>
-            </div>
         `;
     } else {
         return `
@@ -814,9 +984,17 @@ router.on('/signup', loadSignUpPage);
 router.on('/profile', loadProfilePage);
 router.on('/change-password', loadChangePasswordPage);
 router.on('/password-change-success', loadPasswordChangeSuccessPage);
+router.on('/auth/delete_user', loadDeleteUserPage);
+router.on('/auth/update_user', loadUpdateUserPage);
 router.on('/chat', loadChatPage);
 router.on('/pong', async () => {
     try {
+        bombover = true;
+        pongadvover = true;
+        pongover = false;
+        // if (currentGame && typeof currentGame.destroy === 'function') {
+        //     currentGame.destroy();
+        // }
         const html = `<body>
 
         <div id="content">
@@ -877,8 +1055,8 @@ router.on('/pong', async () => {
         <div id="gameStats">
             <h2>Statistiques du jeu</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
-            <p>Score total : <span id="playerLabel">Joueur</span> <span id="totalPlayerScore">0</span> - <span id="opponentLabel">Ordinateur</span> <span id="totalComputerScore">0</span></p>
             <p>Taux de victoires : <span id="winRatio">0%</span></p>
+            <p>Score total : <span id="playerLabel">Joueur</span> <span id="totalPlayerScore">0</span> - <span id="opponentLabel">Ordinateur</span> <span id="totalComputerScore">0</span></p>
             <p>Parties parfaites : <span id="perfectPlayerLabel">Joueur</span> <span id="perfectPlayer">0</span> - <span id="perfectOpponentLabel">Ordinateur</span> <span id="perfectComputer">0</span></p>
             <p>Dernières parties :</p>
             <ul id="lastGames"></ul>
@@ -887,12 +1065,15 @@ router.on('/pong', async () => {
     </main>
 </div>`
         document.querySelector('#app').innerHTML = html;
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // Charger les scripts nécessaires
-        const pong = document.createElement('script');
-        pong.src = "/static/js/pong.js";
-        pong.defer = true;
-        document.body.appendChild(pong);
+        // currentGame = initPong();
+        // Conserver la référence au module pour pouvoir le détruire lors d'un prochain changement de route
+        // currentGame = pongModule;
+        const pongModule = await import('/static/js/pong.js');
+        pongModule.init();
+        currentGame = pongModule;
     } catch (error) {
         console.error("Erreur lors du chargement de Pong:", error);
     }
@@ -900,6 +1081,12 @@ router.on('/pong', async () => {
 });
 router.on('/pong-ameliore', async () => {
     try {
+        // if (currentGame && typeof currentGame.destroy === 'function') {
+        //     currentGame.destroy();
+        // }
+        bombover = true;
+        pongover = true;
+        pongadvover = false;
         const html = `<body>
 
         <div id="content">
@@ -957,27 +1144,34 @@ router.on('/pong-ameliore', async () => {
         <div id="game">
             <canvas id="canvas" width="640" height="420"></canvas>
         </div>
-        <div id="powerUpDisplay" style="position: absolute; top: 20px; left: 20px; color: white; font-family: 'Press Start 2P', cursive; font-size: 16px;">
+        <div id="powerUpDisplay" style="position: absolute; top: 20px; left: 20px; color: white; font-family: 'Press Start 2P', cursive; font-size: 16px; display: none">
             Power-up actif : <span id="activePowerUpName">Aucun</span>
         </div>
         <div id="gameStats">
             <h2>Statistiques du jeu</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
-            <p>Score total : <span id="playerLabel">Joueur</span> <span id="totalPlayerScore">0</span> - <span id="opponentLabel">Ordinateur</span> <span id="totalComputerScore">0</span></p>
             <p>Taux de victoires : <span id="winRatio">0%</span></p>
+            <p>Score total : <span id="playerLabel">Joueur</span> <span id="totalPlayerScore">0</span> - <span id="opponentLabel">Ordinateur</span> <span id="totalComputerScore">0</span></p>
             <p>Parties parfaites : <span id="perfectPlayerLabel">Joueur</span> <span id="perfectPlayer">0</span> - <span id="perfectOpponentLabel">Ordinateur</span> <span id="perfectComputer">0</span></p>
             <p>Dernières parties :</p>
             <ul id="lastGames"></ul>
         </div>
+        <canvas id="backgroundCanvas" style="display: none;"></canvas>
     </main>
 </div>`
         document.querySelector('#app').innerHTML = html;
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // Charger les scripts nécessaires
-        const pong_improved = document.createElement('script');
-        pong_improved.src = "/static/js/pong-ameliore.js";
-        pong_improved.defer = true;
-        document.body.appendChild(pong_improved);
+        // const pong_improved = document.createElement('script');
+        // pong_improved.src = "/static/js/pong-ameliore.js";
+        // pong_improved.defer = true;
+        // document.body.appendChild(pong_improved);
+
+        // currentGame = initPongImproved();
+        const pongImproveModule = await import('/static/js/pong-ameliore.js');
+        pongImproveModule.init();
+        currentGame = pongImproveModule;
     } catch (error) {
         console.error("Erreur lors du chargement de Pong Ameliore:", error);
     }
@@ -985,9 +1179,15 @@ router.on('/pong-ameliore', async () => {
 });
 router.on('/Bomberman', async () => {
     try {
+        // if (currentGame && typeof currentGame.destroy === 'function') {
+        //     currentGame.destroy();
+        // }
+        pongover = true;
+        pongadvover = true;
+        bombover = false;
         const html = `<div id="content">
         <header>
-        <h1 id="title" class="titlePong">Bomberman<br/></h1>
+        <h1 id="title" class="titleBomb">Bomberman<br/></h1>
     </header>
 
     <main>
@@ -1041,18 +1241,16 @@ router.on('/Bomberman', async () => {
         <div id="game">
             <canvas id="canvas" width="600" height="600"></canvas>
         </div>
-
-        <div id="gameStats">
+        
+         <div id="gameStats">
             <h2>Statistiques</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
             <p>Bombes placées : <span id="totalBombs">0</span></p>
             <p>Blocs détruits : <span id="blocksDestroyed">0</span></p>
             <p>Ennemis tués : <span id="enemiesKilled">0</span></p>
-            <p>Ratio de victoire : <span id="winRatio">0%</span></p>
         </div>
 
         <div id="gameHistory">
-            <h2>Historique des dernières parties</h2>
             <ul id="lastGames" class="button"></ul>
         </div>
         <div id="endGameMenu" style="display: none;">
@@ -1065,12 +1263,17 @@ router.on('/Bomberman', async () => {
     </main>
 </div>`
         document.querySelector('#app').innerHTML = html;
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // Charger les scripts nécessaires
-        const Bomberman = document.createElement('script');
-        Bomberman.src = "/static/js/Bomberman.js";
-        Bomberman.defer = true;
-        document.body.appendChild(Bomberman);
+        // const Bomberman = document.createElement('script');
+        // Bomberman.src = "/static/js/Bomberman.js";
+        // Bomberman.defer = true;
+        // document.body.appendChild(Bomberman);
+        // currentGame = initBomberman();
+        const bombermanModule = await import('/static/js/Bomberman.js');
+        bombermanModule.init();
+        currentGame = bombermanModule;
     } catch (error) {
         console.error("Erreur lors du chargement de Bomberman:", error);
     }

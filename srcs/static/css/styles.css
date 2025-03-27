@@ -1,4 +1,10 @@
 /* Variables globales pour les couleurs et les thèmes */
+html, body {
+    overflow: auto; /* Défilement uniquement si nécessaire */
+    height: 100%;   
+    margin: 0;      
+}
+
 :root {
     --primary-bg: #1b2838;
     --primary-text: #b8c2cc;
@@ -1600,6 +1606,7 @@ canvas {
 
 /* Statistiques */
 #gameStats {
+    display: none;
     position: absolute;
     top: 15%;
     left: 20%;
@@ -1683,7 +1690,15 @@ canvas {
 }
 
 .titlePong {
-	height: auto;
+	position: fixed;
+    top: 210px;
+    left: 820px;
+}
+
+.titleBomb {
+    position: fixed;
+    top: 210px;
+    left: 782px
 };
 
 /* Positionnement du bouton "Insert Coin" */
