@@ -1,4 +1,3 @@
-
 // i18n
 
 const i18n = i18next.createInstance();
@@ -68,7 +67,7 @@ const router = {
         window.addEventListener('popstate', () => {
             const currentPath = window.location.pathname;
             const normalizedPath = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
-            
+
             if (this.routes[normalizedPath]) {
                 this.routes[normalizedPath]();
                 updateTranslations();
@@ -76,10 +75,10 @@ const router = {
                 this.navigate('/');
             }
         });
-    
+
         const initialPath = window.location.pathname;
         const normalizedInitialPath = initialPath.endsWith('/') ? initialPath.slice(0, -1) : initialPath;
-        
+
         if (this.routes[normalizedInitialPath]) {
             this.routes[normalizedInitialPath]();
         } else {
@@ -178,7 +177,7 @@ async function updateNavbar() {
                 const newLang = i18n.language === 'en' ? 'fr' : 'en';
                 i18n.changeLanguage(newLang);
             });
-            
+
             updateTranslations();
         }
     } catch (error) {
@@ -191,12 +190,12 @@ async function handleLogout(event) {
     if (event && event.preventDefault) {
         event.preventDefault();
     }
-    
+
     try {
         const csrftoken = getCookie('csrftoken');
         const response = await fetch('/logout/', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrftoken
             }
@@ -244,37 +243,37 @@ function loadSignUpPage() {
             <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
             <div class="form-group">
                 <label for="id_username" data-i18n="signup.username"></label>
-                <input type="text" name="username" id="id_username" class="form-control" 
+                <input type="text" name="username" id="id_username" class="form-control"
                     placeholder=" " required>
             </div>
             <div class="form-group">
                 <label for="id_email" data-i18n="signup.email"></label>
-                <input type="email" name="email" id="id_email" class="form-control" 
+                <input type="email" name="email" id="id_email" class="form-control"
                     placeholder=" " required>
             </div>
             <div class="form-group">
                 <label for="id_profile_photo" data-i18n="signup.profile_photo"></label>
-                <input type="file" id="id_profile_photo" name="profile_photo" 
+                <input type="file" id="id_profile_photo" name="profile_photo"
                     class="form-control" accept="image/*" required>
             </div>
             <div class="form-group">
                 <label for="id_first_name" data-i18n="signup.first_name"></label>
-                <input type="text" name="first_name" id="id_first_name" 
+                <input type="text" name="first_name" id="id_first_name"
                     class="form-control" required>
             </div>
             <div class="form-group">
                 <label for="id_last_name" data-i18n="signup.last_name"></label>
-                <input type="text" name="last_name" id="id_last_name" 
+                <input type="text" name="last_name" id="id_last_name"
                     class="form-control" required>
             </div>
             <div class="form-group">
                 <label for="id_password" data-i18n="signup.password"></label>
-                <input type="password" name="password" id="id_password" 
+                <input type="password" name="password" id="id_password"
                     class="form-control" required>
             </div>
             <div class="form-group">
                 <label for="id_confirm_password" data-i18n="signup.confirm_password"></label>
-                <input type="password" name="confirm_password" id="id_confirm_password" 
+                <input type="password" name="confirm_password" id="id_confirm_password"
                     class="form-control" required>
             </div>
             <button type="submit" class="btn btn-primary" data-i18n="signup.submit"></button>
@@ -286,14 +285,14 @@ function loadSignUpPage() {
 
     document.querySelector('#app').innerHTML = signUpHTML;
     document.querySelector('#signup-form').addEventListener('submit', handleSignUp);
-    
+
     const avatarInput = document.querySelector('#id_profile_photo');
     if (avatarInput) {
         avatarInput.addEventListener('change', function() {
             checkAvatar(avatarInput);
         });
     }
-    
+
     updateTranslations();
 }
 
@@ -337,6 +336,7 @@ async function loadProfilePage() {
         if (data.is_authenticated) {
             document.querySelector('#app').innerHTML = generateProfileContent(data);
             updateTranslations();
+            initAddFriendForm();
         } else {
             document.querySelector('#app').innerHTML = '<h2>Please log in to view your profile</h2>';
         }
@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function generateProfileContent(data) {
     const profilePhotoUrl = data.profile_photo || '/static/images/default_avatar.jpg';
-    
+
     const html = `
     <div class="container mt-5">
         <div class="profile-background">
@@ -383,8 +383,8 @@ function generateProfileContent(data) {
             <div class="profile-header" style="background: linear-gradient(to right, ${data.profile_gradient_start}, ${data.profile_gradient_end});">
                 <div class="profile-summary">
                     <div class="avatar-section">
-                        <img src="${profilePhotoUrl}" 
-                            alt="Avatar" 
+                        <img src="${profilePhotoUrl}"
+                            alt="Avatar"
                             class="profile-avatar"
                             onerror="this.src='/static/images/default_avatar.jpg'">
                     </div>
@@ -451,6 +451,22 @@ function generateProfileContent(data) {
 
                     <div class="friends-section">
                         <h3><span data-i18n="profile.my_friends"></span> (<span class="stat-value">${data.friends.length}</span>)</h3>
+                        <div class="friend-form-container">
+                            <h4>Ajouter un ami</h4>
+                            <form id="addFriendForm" class="friend-form">
+                                <input
+                                    type="text"
+                                    name="username"
+                                    id="friendUsername"
+                                    placeholder="Nom d'utilisateur"
+                                    required
+                                    pattern="[A-Za-z0-9_]{3,}"
+                                    title="Le nom d'utilisateur doit contenir au moins 3 caractères (lettres, chiffres ou underscore)"
+                                >
+                                <button type="submit">Envoyer la demande</button>
+                            </form>
+                            <div id="friendRequestStatus" class="friend-form-message"></div>
+                        </div>
                         <div class="friends-grid">
                             ${data.friends.map(friend => `
                                 <div class="friend-card">
@@ -492,34 +508,34 @@ function generateProfileContent(data) {
         if (event.target.closest('#customizeProfile')) {
             const modal = document.getElementById('colorPickerModal');
             modal.style.display = 'block';
-            
+
             const startColorInput = document.getElementById('startColor');
             const endColorInput = document.getElementById('endColor');
-            
+
             if (startColorInput && endColorInput) {
                 const updatePreview = () => {
                     const startColor = startColorInput.value;
                     const endColor = endColorInput.value;
-                    document.getElementById('gradientPreview').style.background = 
+                    document.getElementById('gradientPreview').style.background =
                         `linear-gradient(to right, ${startColor}, ${endColor})`;
                 };
-                
+
                 updatePreview();
-                
+
                 startColorInput.addEventListener('input', updatePreview);
                 endColorInput.addEventListener('input', updatePreview);
-                
+
                 document.querySelector('.custom-apply-btn')?.addEventListener('click', () => {
                     const startColor = startColorInput.value;
                     const endColor = endColorInput.value;
-                    
+
                     const profileHeader = document.querySelector('.profile-header');
                     profileHeader.style.background = `linear-gradient(to right, ${startColor}, ${endColor})`;
-                    
+
                     saveProfileColors(startColor, endColor);
                     modal.style.display = 'none';
                 });
-                
+
                 document.querySelector('.modal-buttons .danger')?.addEventListener('click', () => {
                     modal.style.display = 'none';
                 });
@@ -581,7 +597,7 @@ function saveProfileColors(startColor, endColor) {
 
 function loadLoginPage() {
     const csrfToken = getCookie('csrftoken');
-    
+
     const loginHTML = `
         <div class="login-section">
             <h2 data-i18n="login.title"></h2>
@@ -596,16 +612,16 @@ function loadLoginPage() {
                     <input type="password" name="password" id="id_password" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-primary" data-i18n="login.submit"></button>
-            </form>    
+            </form>
             <p data-i18n="login.no_account"></p>
-            <a href="/signup" data-link data-i18n="login.signup_link"></a>
+            <a href="/signup" data-link class="nav-link btn btn-secondary" data-i18n="nav.signup"></a>
             <p data-i18n="login.connect_42"></p>
             <a href="/api/42/" id="connect-42-link" data-i18n="login.connect_here"></a>
         </div>
     `;
 
     document.querySelector('#app').innerHTML = loginHTML;
-    
+
     document.addEventListener('click', function (event) {
         const link = event.target.closest('#connect-42-link');
         if (link) {
@@ -613,7 +629,7 @@ function loadLoginPage() {
             window.location.href = '/api/42/';
         }
     });
-    
+
     document.querySelector('#login-form').addEventListener('submit', handleLogin);
     updateTranslations();
 }
@@ -627,37 +643,37 @@ function loadChangePasswordPage() {
             <div id="password-change-errors" class="error-message"></div>
             <form id="password-change-form" method="post" class="fade-in">
                 <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
-                
+
                 <div class="form-group">
                     <label for="old_password" data-i18n="password_change.old_password"></label>
-                    <input type="password" 
-                           name="old_password" 
-                           id="old_password" 
-                           class="form-control" 
-                           placeholder="Enter your current password" 
+                    <input type="password"
+                           name="old_password"
+                           id="old_password"
+                           class="form-control"
+                           placeholder="Enter your current password"
                            data-i18n-placeholder="password_change.old_placeholder"
                            required>
                 </div>
 
                 <div class="form-group">
                     <label for="new_password1" data-i18n="password_change.new_password"></label>
-                    <input type="password" 
-                           name="new_password1" 
-                           id="new_password1" 
-                           class="form-control" 
+                    <input type="password"
+                           name="new_password1"
+                           id="new_password1"
+                           class="form-control"
                            placeholder="Enter a new password"
-                           data-i18n-placeholder="password_change.new_placeholder" 
+                           data-i18n-placeholder="password_change.new_placeholder"
                            required>
                 </div>
 
                 <div class="form-group">
                     <label for="new_password2" data-i18n="password_change.confirm_password"></label>
-                    <input type="password" 
-                           name="new_password2" 
-                           id="new_password2" 
-                           class="form-control" 
+                    <input type="password"
+                           name="new_password2"
+                           id="new_password2"
+                           class="form-control"
                            placeholder="Confirm new password"
-                           data-i18n-placeholder="password_change.confirm_placeholder" 
+                           data-i18n-placeholder="password_change.confirm_placeholder"
                            required>
                 </div>
 
@@ -823,7 +839,7 @@ router.on('/pong', async () => {
                 <li><button id="qButton" class="button">QUIT</button></li>
             </ul>
         </nav>
-        
+
         <footer>
             <p class="controlMenu" id="secondInstruct" style="display: none;">Use ↑ and ↓ to navigate, press Space to select</p>
         </footer>
@@ -906,7 +922,7 @@ router.on('/pong-ameliore', async () => {
                 <li><button id="qButton" class="button">QUIT</button></li>
             </ul>
         </nav>
-        
+
         <footer>
             <p class="controlMenu" id="secondInstruct" style="display: none;">Use ↑ and ↓ to navigate, press Space to select</p>
         </footer>
@@ -990,7 +1006,7 @@ router.on('/Bomberman', async () => {
                 <li><button id="qButton" class="button">QUIT</button></li>
             </ul>
         </nav>
-        
+
         <footer>
             <p class="controlMenu" id="secondInstruct" style="display: none;">Use ↑ and ↓ to navigate, press Space to select</p>
         </footer>
@@ -1025,7 +1041,7 @@ router.on('/Bomberman', async () => {
         <div id="game">
             <canvas id="canvas" width="600" height="600"></canvas>
         </div>
-        
+
         <div id="gameStats">
             <h2>Statistiques</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
@@ -1034,7 +1050,7 @@ router.on('/Bomberman', async () => {
             <p>Ennemis tués : <span id="enemiesKilled">0</span></p>
             <p>Ratio de victoire : <span id="winRatio">0%</span></p>
         </div>
-        
+
         <div id="gameHistory">
             <h2>Historique des dernières parties</h2>
             <ul id="lastGames" class="button"></ul>
@@ -1070,7 +1086,7 @@ function toggleDarkMode() {
     const body = document.documentElement;
     const currentTheme = body.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? '' : 'dark';
-    
+
     body.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
 }
@@ -1085,9 +1101,49 @@ function initDarkMode() {
 
 document.addEventListener('DOMContentLoaded', function() {
     initDarkMode();
-    
+
     const darkModeBtn = document.querySelector('#theme-toggle');
     if (darkModeBtn) {
         darkModeBtn.addEventListener('click', toggleDarkMode);
     }
 });
+
+function initAddFriendForm() {
+    const form = document.getElementById('addFriendForm');
+    const statusDiv = document.getElementById('friendRequestStatus');
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('friendUsername').value;
+
+            try {
+                const response = await fetch(`/add-friend/${username}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const data = await response.json();
+
+                // Afficher le message de statut
+                statusDiv.textContent = data.message;
+                statusDiv.className = `friend-form-message ${data.status}`;
+
+                // Si l'ajout est réussi, vider le champ
+                if (data.status === 'success') {
+                    document.getElementById('friendUsername').value = '';
+                    // Optionnel : rafraîchir la liste des amis
+                    // updateFriendsList();
+                }
+
+            } catch (error) {
+                statusDiv.textContent = "Une erreur s'est produite";
+                statusDiv.className = 'friend-form-message error';
+            }
+        });
+    }
+}
