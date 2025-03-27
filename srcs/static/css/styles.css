@@ -1660,8 +1660,8 @@ canvas {
 }
 
 /* Correction pour le positionnement des menus et bulles d'info */
-#menu, 
-#menuMode, 
+#menu,
+#menuMode,
 #menuDifficulty,
 #menuInfo,
 .infoBubble {
@@ -1779,8 +1779,8 @@ canvas {
 }
 
 /* Style amélioré pour les menus et info-bulles */
-#menu, 
-#menuMode, 
+#menu,
+#menuMode,
 #menuDifficulty,
 #menuInfo,
 .infoBubble {
@@ -1807,14 +1807,82 @@ canvas {
         font-size: 16px;
         padding: 8px 15px;
     }
-    
+
     .controlMenu,
     #firstInstruct,
     #secondInstruct {
         font-size: 0.8rem;
     }
-    
+
     #gameStats {
         bottom: 120px; /* Augmenter la distance du bas pour les petits écrans */
     }
+}
+
+/* Styles pour le formulaire d'ajout d'amis */
+.friend-form-container {
+    background: var(--modal-bg);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.friend-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.friend-form input {
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--input-border-color);
+    color: var(--primary-text);
+    padding: 10px;
+    border-radius: 5px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8em;
+}
+
+.friend-form input:focus {
+    border-color: var(--input-focus-border-color);
+    outline: none;
+}
+
+.friend-form button {
+    background: var(--friend-action-bg);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+
+.friend-form button:hover {
+    background: var(--friend-action-hover-bg);
+    transform: translateY(-2px);
+}
+
+.friend-form-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.friend-form-message.success {
+    background-color: rgba(42, 157, 143, 0.2);
+    color: #2a9d8f;
+}
+
+.friend-form-message.error {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+}
+
+.friend-form-message.info {
+    background-color: rgba(102, 192, 244, 0.2);
+    color: #66c0f4;
 }
