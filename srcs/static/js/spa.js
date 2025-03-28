@@ -136,7 +136,7 @@ function handleLogin(event) {
     .then(data => {
         if (data.success) {
             window.location.href = '/';
-            loadHomePage();
+            loadHomePage();                                                          
         } else {
             alert(i18n.t('Identifiants incorrects'));
         }

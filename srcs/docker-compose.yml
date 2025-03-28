@@ -2,6 +2,8 @@
 services:
   web:
     build: .
+    ports:
+      - "8000:8000"
     command: >
       bash -c "python manage.py migrate &&
               python manage.py collectstatic --no-input &&
@@ -17,8 +19,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    expose:
-      - "8000"
 
   nginx:
     image: nginx:alpine
@@ -53,8 +53,8 @@ services:
       - "5432:5432" # Exposer le port PostgreSQL
 
 volumes:
-  postgres_data: # Volume pour la DB
-  static_volume: # Volume pour les fichiers statiques
+  postgres_data:
+  static_volume:
   media_volume:
 
 networks:

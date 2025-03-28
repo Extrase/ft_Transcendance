@@ -370,26 +370,30 @@ def callback_view(request):
             user.save()
 
         # Télécharger la photo de profil uniquement si elle n'existe pas déjà
-        if 'image' in user_data and 'link' in user_data['image']:
+        if 'image' in user_data:
             try:
-            # Supprimer l'ancienne photo si elle existe
-                if user.profile_photo:
-                    if os.path.exists(user.profile_photo.path):
-                        os.remove(user.profile_photo.path)
-                    user.profile_photo.delete()
+                image_url = user_data['image'].get('link') or user_data['image'].get('url')
+                if image_url:
+                    # Delete old photo if exists
+                    if user.profile_photo:
+                        if os.path.exists(user.profile_photo.path):
+                            os.remove(user.profile_photo.path)
+                        user.profile_photo.delete()
 
-                image_response = requests.get(user_data['image']['link'])
-                if image_response.ok:
-                    from django.core.files.base import ContentFile
-                    image_name = f"avatar_{user.username}.jpg"
-                    user.profile_photo.save(
-                        image_name,
-                        ContentFile(image_response.content),
-                        save=True
-                    )
+                    # Download and save new photo
+                    image_response = requests.get(image_url)
+                    if image_response.ok:
+                        image_name = f"avatar_{user.username}.jpg"
+                        user.profile_photo.save(
+                            image_name,
+                            ContentFile(image_response.content),
+                            save=True
+                        )
+                        print(f"Successfully saved profile photo for {user.username}")
+                    else:
+                        print(f"Failed to download image: {image_response.status_code}")
             except Exception as e:
-                print(f"Could not download profile photo: {str(e)}")
-                return JsonResponse({'success': False, 'error': f'Could not download profile photo: {str(e)}'})
+                print(f"Error saving profile photo: {str(e)}")
 
         # Créer ou mettre à jour le profil
         Profile.objects.get_or_create(
@@ -406,7 +410,7 @@ def callback_view(request):
         login(request, user)
         user_directory = os.path.join(settings.MEDIA_ROOT, 'users', user.username)
         os.makedirs(user_directory, exist_ok=True)
-        return redirect('/')
+        return HttpResponseRedirect(f"{settings.FRONTEND_URL}/")
 
     except Exception as e:
         print(f"Erreur dans callback_view: {str(e)}")
@@ -466,16 +470,6 @@ class PasswordChangeAPIView(PasswordChangeView):
 class PasswordChangeDoneAPIView(PasswordChangeDoneView):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'success': True, 'message': 'Password successfully changed.'})
-
-
-def home_vue(request):
-    return render(request, 'home.html')
-
-def profile_vue(request):
-    return render(request, 'profile.html')
-
-def login_vue(request):
-    return render(request, 'login.html')
 
 def api_check_auth(request):
     return JsonResponse({'is_authenticated': request.user.is_authenticated})
