@@ -344,34 +344,59 @@ async function loadProfilePage() {
     pongadvover = true;
     pongover = true;
     try {
-        const response = await fetch('/api/profile/');
-        if (!response.ok) throw new Error('Failed to fetch profile data');
-
-        const data = await response.json();
-
-        if (data.is_authenticated) {
-            document.querySelector('#app').innerHTML = generateProfileContent(data);
-            updateTranslations();
-        } else {
-            document.querySelector('#app').innerHTML = '<h2>Please log in to view your profile</h2>';
+        // Vérifier d'abord si l'utilisateur est authentifié
+        const authCheck = await fetch('/api/check-auth/', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const authData = await authCheck.json();
+        
+        if (!authData.is_authenticated) {
+            document.querySelector('#app').innerHTML = '<h2>Veuillez vous connecter pour voir votre profil</h2>';
+            setTimeout(() => router.navigate('/login'), 2000);
+            return;
         }
+        
+        // Maintenant, récupérer les données du profil
+        const response = await fetch('/api/profile/', {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Échec de la récupération des données du profil: ${response.status}`);
+        }
+        
+        // Vérifier le type de contenu
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Le serveur n\'a pas renvoyé de JSON');
+        }
+
+        const text = await response.text();
+        let data;
+        
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('Réponse non-JSON reçue:', text.substring(0, 100));
+            throw new Error('Impossible d\'analyser la réponse JSON');
+        }
+
+        document.querySelector('#app').innerHTML = generateProfileContent(data);
+        updateTranslations();
     } catch (error) {
-        console.error('Error loading profile:', error);
+        console.error('Erreur lors du chargement du profil:', error);
+        document.querySelector('#app').innerHTML = `
+            <h2>Erreur lors du chargement des données du profil</h2>
+            <p>${error.message}</p>
+            <a href="/login" data-link class="btn btn-primary">Se connecter</a>
+        `;
     }
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/profile/')
-        .then(response => response.json())
-        .then(data => {
-            if (data.is_authenticated) {
-                document.querySelector('#app').innerHTML = generateProfileContent(data);
-            } else {
-                document.querySelector('#app').innerHTML = '<h2>Please log in to view your profile</h2>';
-            }
-        })
-        .catch(error => console.error('Error fetching profile data:', error));
-});
 
 function generateProfileContent(data) {
     const profilePhotoUrl = data.profile_photo ? 
