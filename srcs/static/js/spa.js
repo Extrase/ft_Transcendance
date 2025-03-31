@@ -374,7 +374,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function generateProfileContent(data) {
-    const profilePhotoUrl = data.profile_photo || '/static/images/default_avatar.jpg';
+    const profilePhotoUrl = data.profile_photo ? 
+        data.profile_photo.replace('http://localhost/', 'http://localhost:8080/') : 
+        '/static/images/default_avatar.jpg';
     
     const html = `
     <div class="container mt-5">
@@ -722,6 +724,10 @@ async function loadUpdateUserPage() {
         const response = await fetch('/api/user-data/');
         const userData = await response.json();
 
+        const profilePhotoUrl = userData.profile_photo ? 
+            userData.profile_photo.replace('http://localhost/', 'http://localhost:8080/') : 
+            '';
+
         document.querySelector('#app').innerHTML = `
             <div class="signup-section">
                 <h2 data-i18n="update.update_profile"></h2>
@@ -742,8 +748,8 @@ async function loadUpdateUserPage() {
                         <label for="id_profile_photo" data-i18n="update.photo"></label>
                         <input type="file" id="id_profile_photo" name="profile_photo"
                             class="form-control" accept="image/*">
-                        ${userData.profile_photo ?
-                            `<img src="${userData.profile_photo}" alt="Current profile photo"
+                        ${profilePhotoUrl ?
+                            `<img src="${profilePhotoUrl}" alt="Current profile photo"
                                 style="max-width: 100px; margin-top: 10px;">` : ''}
                     </div>
                     <div class="form-group">
