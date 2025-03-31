@@ -74,6 +74,7 @@ class GameStatistics(models.Model):
     ]
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='medium')
     is_perfect_game = models.BooleanField(default=False)  # Victoire sans encaisser de point
+    duration = models.FloatField(default=300.0)  # durée en secondes, défaut 5 minutes
 
     def __str__(self):
         return f"{self.player.username} - {self.date_played.strftime('%Y-%m-%d %H:%M')}"

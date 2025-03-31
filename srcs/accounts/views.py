@@ -37,9 +37,6 @@ class SignUpView(CreateView):
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
-# def pong_view(request):
-#     return render(request, 'pong.html')
-
 def create_user_directory(user):
     user_directory = os.path.join(settings.STATIC_ROOT, 'users', user.username)
     if not os.path.exists(user_directory):

@@ -587,6 +587,43 @@ function generateProfileContent(data) {
     return html;
 }
 
+function saveProfileColors(startColor, endColor) {
+    const csrftoken = getCookie('csrftoken');
+    
+    if (!csrftoken) {
+        console.error('CSRF token not found');
+        alert('Erreur de sécurité. Veuillez rafraîchir la page.');
+        return;
+    }
+    
+    fetch('/api/profile/colors/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({ startColor, endColor })
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            console.error('Server responded with error:', response.status, response.statusText);
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('Colors updated successfully');
+        } else {
+            console.error('Error saving colors:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving colors:', error);
+    });
+}
+
 function updatePreview() {
     const startColor = document.getElementById('startColor').value;
     const endColor = document.getElementById('endColor').value;
@@ -606,25 +643,6 @@ function applyGradient() {
 
     saveProfileColors(startColor, endColor);
     closeColorPicker();
-}
-
-function saveProfileColors(startColor, endColor) {
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-    fetch('/api/profile/colors/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken
-        },
-        body: JSON.stringify({ startColor, endColor })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Colors updated successfully');
-        }
-    })
-    .catch(error => console.error('Error saving colors:', error));
 }
 
 function loadLoginPage() {

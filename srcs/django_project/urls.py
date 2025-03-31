@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, RedirectView
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.staticfiles.storage import staticfiles_storage
 from .views import CustomLoginView
 import accounts.views
 
@@ -15,7 +16,10 @@ urlpatterns = [
     path('auth/update_user/', accounts.views.update_user, name='update_user'),
     path('auth/delete_user/', accounts.views.delete_user, name='delete_user'),
     path('api/user-data/', accounts.views.get_user_data, name='get_user_data'),
+    path('favicon.ico', RedirectView.as_view(
+        url=staticfiles_storage.url('favicon_io/favicon.ico'))),
     # API routes
+    path('api/profile/colors/', accounts.views.save_profile_colors, name='save_profile_colors'),
     path('api/login/', accounts.views.api_login, name='api_login'),
     path('login/', accounts.views.login_view, name='login'),
     path('', accounts.views.home, name='home'),
