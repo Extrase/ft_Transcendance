@@ -160,6 +160,9 @@ LOGOUT_REDIRECT_URL = "home"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",
+]
 
 AUTH_USER_MODEL = 'accounts.User'
 

@@ -13,7 +13,7 @@ i18n
   .use(i18nextHttpBackend)
   .use(i18nextBrowserLanguageDetector)
   .init({
-    fallbackLng: 'en',
+    fallbackLng: 'en-US',
     debug: false,
     interpolation: {
       escapeValue: false
