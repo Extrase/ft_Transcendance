@@ -529,7 +529,17 @@ async function handleMessageSubmit(e) {
         });
 
         if (response.ok) {
-            // Ajouter cette vérification pour éviter l'erreur
+            // IMPORTANT: Ajouter d'abord le message à l'interface locale
+            // pour que l'expéditeur puisse voir son propre message
+            addMessageToChat({
+                message: content,
+                is_sent: true,
+                sender: window.chatState.currentUser,
+                recipient_id: window.chatState.currentRecipient.id,
+                timestamp: new Date()
+            });
+            
+            // Ensuite essayer d'envoyer via WebSocket pour les notifications en temps réel
             if (window.chatState.socket && window.chatState.socket.readyState === WebSocket.OPEN) {
                 window.chatState.socket.send(JSON.stringify({
                     type: 'chat_message',
@@ -540,14 +550,7 @@ async function handleMessageSubmit(e) {
                 }));
             } else {
                 console.warn("WebSocket non connecté - impossible d'envoyer la notification en temps réel");
-                // Ajouter le message localement même si le WebSocket est indisponible
-                addMessageToChat({
-                    message: content,
-                    is_sent: true,
-                    sender: window.chatState.currentUser,
-                    recipient_id: window.chatState.currentRecipient.id,
-                    timestamp: new Date()
-                });
+                // Le message est déjà ajouté localement ci-dessus
             }
             
             this.reset();

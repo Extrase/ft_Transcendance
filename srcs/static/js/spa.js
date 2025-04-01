@@ -452,7 +452,11 @@ function generateProfileContent(data) {
                         <div class="recent-activity">
                             <h3 data-i18n="profile.recent_activity"></h3>
                             <p><span data-i18n="profile.last_played"></span>: <span class="data">${data.last_played_game || 'N/A'}</span></p>
-                            <p><span data-i18n="profile.time_played"></span>: <span class="data">${data.time_played} hrs</span></p>
+                            <p><span data-i18n="profile.time_played"></span>: <span class="data">
+                            ${data.time_played >= 60 
+                            ? `${Math.floor(data.time_played / 60)}h ${Math.floor(data.time_played % 60)}min` 
+                            : `${Math.floor(data.time_played)} min`}
+                            </span></p>
                         </div>
                     </div>
                     <button id="customizeProfile" class="profile-link custom-change-password-btn" style="margin-top: 10px;">

@@ -587,8 +587,13 @@ def save_game_stats(request):
             # Ajouter les points au score total
             profile.total_score += data['player_score']
 
-            # Mise à jour du temps de jeu (approximatif, par exemple 5 minutes par partie)
-            profile.time_played += 5.0  # minutes
+            # Utiliser la durée réelle si elle est fournie, sinon valeur par défaut
+            game_duration = data.get('duration', 5.0)  # en secondes
+            # Convertir en minutes pour la cohérence avec le reste du code
+            game_duration_minutes = game_duration / 60.0
+            
+            # Mise à jour du temps de jeu avec la durée réelle
+            profile.time_played += game_duration_minutes
 
             profile.save()
 

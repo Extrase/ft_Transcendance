@@ -767,7 +767,8 @@ function recordGameData(winner) {
     saveGameStats({
         playerScore: game.player.score, 
         computerScore: game.computer.score, 
-        difficulty: difficultySelect
+        difficulty: difficultySelect,
+        gameDuration: gameData.gameDuration
     });
     // Mettre à jour le nombre total de parties
     gameData.totalGames++;
@@ -848,11 +849,12 @@ async function saveGameStats(gameData) {
         else if (gameData.difficulty === 'md') difficultyValue = 'medium';
         else if (gameData.difficulty === 'hd') difficultyValue = 'hard';
         
-        // Préparer les données à envoyer
+        // Ajouter la durée de jeu aux données envoyées
         const data = {
             player_score: gameData.playerScore,
             computer_score: gameData.computerScore,
-            difficulty: difficultyValue
+            difficulty: difficultyValue,
+            duration: gameData.gameDuration || 5.0 // Utiliser la durée réelle si disponible, sinon 5 minutes par défaut
         };
         
         console.log('Sending data to server:', data);
