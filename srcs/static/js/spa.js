@@ -216,9 +216,18 @@ document.addEventListener('DOMContentLoaded', updateNavbar);
 
 // RÉCUPÉRER LE COOKIE CSRF
 function getCookie(name) {
-    return document.cookie.split('; ')
-        .find(row => row.startsWith(name + '='))
-        ?.split('=')[1] || null;
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // CHARGER DYNAMIQUEMENT LA PAGE D'ACCUEIL
@@ -254,7 +263,7 @@ function loadSignUpPage() {
             <div class="form-group">
                 <label for="id_profile_photo" data-i18n="signup.profile_photo"></label>
                 <input type="file" id="id_profile_photo" name="profile_photo"
-                    class="form-control" accept="image/*" required>
+                    class="form-control" accept="image/*">
             </div>
             <div class="form-group">
                 <label for="id_first_name" data-i18n="signup.first_name"></label>
@@ -314,7 +323,8 @@ async function handleSignUp(event) {
         if (response.ok) {
             const data = await response.json();
             alert('Inscription réussie !');
-            window.location.href = data.redirect_url;
+            // window.location.href = data.redirect_url;
+            router.navigate('/login');
         } else {
             const errorData = await response.json();
             document.getElementById('error-messages').style.display = 'block';
@@ -337,6 +347,7 @@ async function loadProfilePage() {
             document.querySelector('#app').innerHTML = generateProfileContent(data);
             updateTranslations();
             initAddFriendForm();
+            initRemoveFriendForms();
         } else {
             document.querySelector('#app').innerHTML = '<h2>Please log in to view your profile</h2>';
         }
@@ -360,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function generateProfileContent(data) {
     const profilePhotoUrl = data.profile_photo || '/static/images/default_avatar.jpg';
+
 
     const html = `
     <div class="container mt-5">
@@ -411,8 +423,9 @@ function generateProfileContent(data) {
                             <h3 data-i18n="profile.recent_activity"></h3>
                             <p><span data-i18n="profile.last_played"></span>: <span class="data">${data.last_played_game || 'N/A'}</span></p>
                             <p><span data-i18n="profile.time_played"></span>: <span class="data">${data.time_played} hrs</span></p>
-                        </div>
+                            </div>
                     </div>
+                    <p><span data-i18n="profile.online"></span>: <span class="data">${data.online ? 'Online' : 'Offline'}</span></p>
                     <button id="customizeProfile" class="profile-link custom-change-password-btn" style="margin-top: 10px;">
                         <i class="fas fa-palette"></i> <span data-i18n="profile.customize_colors"></span>
                     </button>
@@ -422,7 +435,13 @@ function generateProfileContent(data) {
                         <a href="/change-password" class="profile-link custom-change-password-btn" data-link>
                             <i class="fas fa-key"></i> <span data-i18n="profile.change_password"></span>
                         </a>
+                        <a href="/auth/update_user/" class="profile-link custom-change-password-btn" data-link>
+                            <i class="fas fa-user-edit"></i> Change My Profile
+                        </a>
                         ` : ''}
+                        <a href="/auth/delete_user/" class="profile-link danger" data-link>
+                            <i class="fas fa-user-slash"></i> Delete Account
+                        </a>
                         <button class="profile-link danger" id="logoutButton">
                             <i class="fas fa-sign-out-alt"></i> <span data-i18n="nav.logout"></span>
                         </button>
@@ -468,16 +487,7 @@ function generateProfileContent(data) {
                             <div id="friendRequestStatus" class="friend-form-message"></div>
                         </div>
                         <div class="friends-grid">
-                            ${data.friends.map(friend => `
-                                <div class="friend-card">
-                                    <div class="friend-avatar">
-                                        <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" alt="${friend.username}">
-                                    </div>
-                                    <div class="friend-info">
-                                        <span class="friend-name">${friend.username}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ${generateFriendsList(data.friends)}
                         </div>
                     </div>
 
@@ -554,6 +564,9 @@ function generateProfileContent(data) {
 
     return html;
 }
+
+// Ajouter un gestionnaire d'événements pour les boutons de suppression d'amis
+
 
 function updatePreview() {
     const startColor = document.getElementById('startColor').value;
@@ -743,6 +756,160 @@ function displayPasswordChangeErrors(errors) {
     }
 }
 
+async function loadUpdateUserPage() {
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+        // Récupérer les données de l'utilisateur via la nouvelle API
+        const response = await fetch('/api/user-data/');
+        const userData = await response.json();
+
+        document.querySelector('#app').innerHTML = `
+            <div class="signup-section">
+                <h2>Update your profile</h2>
+                <div id="error-messages" class="alert alert-danger" style="display: none;"></div>
+                <form id="signup-form" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <div class="form-group">
+                        <label for="id_username">Username:</label>
+                        <input type="text" name="username" id="id_username" class="form-control"
+                            value="${userData.username}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_email">Email:</label>
+                        <input type="email" name="email" id="id_email" class="form-control"
+                            value="${userData.email}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_profile_photo">Profile Photo:</label>
+                        <input type="file" id="id_profile_photo" name="profile_photo"
+                            class="form-control" accept="image/*">
+                        ${userData.profile_photo ?
+                            `<img src="${userData.profile_photo}" alt="Current profile photo"
+                                style="max-width: 100px; margin-top: 10px;">` : ''}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_first_name">First Name:</label>
+                        <input type="text" name="first_name" id="id_first_name" class="form-control"
+                            value="${userData.first_name}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_last_name">Last Name:</label>
+                        <input type="text" name="last_name" id="id_last_name" class="form-control"
+                            value="${userData.last_name}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </form>
+            </div>
+        `;
+
+        // Ajouter les écouteurs d'événements
+        document.querySelector('#signup-form').addEventListener('submit', handleUpdateUser);
+
+        const avatarInput = document.querySelector('#id_profile_photo');
+        if (avatarInput) {
+            avatarInput.addEventListener('change', function() {
+                checkAvatar(avatarInput);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showMessage('Error loading user data', 'error');
+    }
+}
+
+
+async function handleUpdateUser(event) {
+    event.preventDefault();
+
+    const form = document.querySelector('#signup-form');
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('/auth/update_user/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+
+        if (response.ok) {
+            alert('Mis à jour du profil réussi !');
+            router.navigate('/profile');
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-messages').style.display = 'block';
+            document.getElementById('error-messages').innerText = errorData.detail || 'Erreur inconnue';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la mis à jour du profil utilisaateur :", error);
+        alert('Une erreur est survenue lors de la mis à jour du profil utilisaateur.');
+    }
+}
+
+async function loadDeleteUserPage() {
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+        // Récupérer les données de l'utilisateur via la nouvelle API
+        const response = await fetch('/api/user-data/');
+        const userData = await response.json();
+
+        document.querySelector('#app').innerHTML = `
+            <div class="signup-section">
+                <h2>Delete your account</h2>
+                <div id="error-messages" class="alert alert-danger" style="display: none;"></div>
+                    <a href="/profile" class="profile-link custom-change-password-btn" data-link>
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </a>
+                <form id="signup-form" enctype="multipart/form-data">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <button type="submit" class="btn btn-primary">Delete</button>
+                </form>
+            </div>
+        `;
+
+        // Ajouter les écouteurs d'événements
+        document.querySelector('#signup-form').addEventListener('submit', handleDeleteUser);
+
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showMessage('Error loading user data', 'error');
+    }
+}
+
+
+async function handleDeleteUser(event) {
+    event.preventDefault();
+
+    if (!confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/auth/delete_user/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            alert('Compte supprimé avec succès !');
+            window.location.href = '/login';  // Redirection directe
+        } else {
+            const errorData = await response.json();
+            document.getElementById('error-messages').style.display = 'block';
+            document.getElementById('error-messages').innerText = errorData.detail || 'Erreur inconnue';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la suppression du compte :", error);
+        alert('Une erreur est survenue lors de la suppression du compte.');
+    }
+}
+
 function generateHomePageContent(data) {
     if (data.is_authenticated) {
         return `
@@ -812,6 +979,8 @@ router.on('/', loadHomePage);
 router.on('/login', loadLoginPage);
 router.on('/signup', loadSignUpPage);
 router.on('/profile', loadProfilePage);
+router.on('/auth/delete_user', loadDeleteUserPage);
+router.on('/auth/update_user', loadUpdateUserPage);
 router.on('/change-password', loadChangePasswordPage);
 router.on('/password-change-success', loadPasswordChangeSuccessPage);
 router.on('/chat', loadChatPage);
@@ -1137,7 +1306,7 @@ function initAddFriendForm() {
                 if (data.status === 'success') {
                     document.getElementById('friendUsername').value = '';
                     // Optionnel : rafraîchir la liste des amis
-                    // updateFriendsList();
+                    router.navigate('/profile');
                 }
 
             } catch (error) {
@@ -1147,3 +1316,87 @@ function initAddFriendForm() {
         });
     }
 }
+
+function initRemoveFriendForms() {
+    const forms = document.querySelectorAll('.remove-friend-form');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = form.dataset.username;
+            let statusDiv = document.getElementById(`removeFriendStatus-${username}`);
+
+            // Créer le statusDiv s'il n'existe pas
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = `removeFriendStatus-${username}`;
+                statusDiv.className = 'friend-form-message';
+                form.insertAdjacentElement('afterend', statusDiv);
+            }
+
+            try {
+                const response = await fetch(`/remove_friend/${encodeURIComponent(username)}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Réponse reçue:", data);
+
+                if (data.status === 'success') {
+                    const friendElement = form.closest('.friend-card');
+                    if (friendElement) {
+                        friendElement.classList.add('fade-out');
+                        setTimeout(() => {
+                            friendElement.remove();
+                            // Vérifier si la liste est vide
+                            const friendsList = document.querySelector('.friends-list');
+                            if (friendsList && friendsList.children.length === 0) {
+                                friendsList.innerHTML = '<p>Pas encore d\'amis.</p>';
+                            }
+                        }, 300);
+                        router.navigate('/profile');
+                    }
+                }
+
+                statusDiv.textContent = data.message;
+                statusDiv.className = `friend-form-message ${data.status}`;
+
+            } catch (error) {
+                console.error("Erreur détaillée:", error);
+                statusDiv.textContent = "Une erreur s'est produite lors de la suppression";
+                statusDiv.className = 'friend-form-message error';
+            }
+        });
+    });
+}
+
+function generateFriendsList(friends) {
+    return friends.map(friend => `
+        <div class="friend-card">
+            <div class="friend-avatar">
+                <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" alt="${friend.username}">
+            </div>
+            <div class="friend-info">
+                <span class="friend-name">${friend.username}</span>
+                <span class="friend-status ${friend.online ? 'online' : 'offline'}">
+                    ${friend.online ? 'Online' : 'Offline'}
+                </span>
+                <form id="removeFriendForm" class="remove-friend-form" data-username="${friend.username}">
+                    <button class="remove-friend-btn" type="submit">Supprimer</button>
+                </form>
+                <div id="removeFriendStatus-${friend.username}" class="friend-form-message"></div>
+            </div>
+        </div>
+    `).join('')
+}
+
