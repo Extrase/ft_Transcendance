@@ -529,14 +529,26 @@ async function handleMessageSubmit(e) {
         });
 
         if (response.ok) {
-            const timestamp = new Date();
-            window.chatState.socket.send(JSON.stringify({
-                type: 'chat_message',
-                message: content,
-                sender: window.chatState.currentUser,
-                recipient_id: window.chatState.currentRecipient.id,
-                timestamp: timestamp.toISOString()
-            }));
+            // Ajouter cette vérification pour éviter l'erreur
+            if (window.chatState.socket && window.chatState.socket.readyState === WebSocket.OPEN) {
+                window.chatState.socket.send(JSON.stringify({
+                    type: 'chat_message',
+                    message: content,
+                    sender: window.chatState.currentUser,
+                    recipient_id: window.chatState.currentRecipient.id,
+                    timestamp: new Date().toISOString()
+                }));
+            } else {
+                console.warn("WebSocket non connecté - impossible d'envoyer la notification en temps réel");
+                // Ajouter le message localement même si le WebSocket est indisponible
+                addMessageToChat({
+                    message: content,
+                    is_sent: true,
+                    sender: window.chatState.currentUser,
+                    recipient_id: window.chatState.currentRecipient.id,
+                    timestamp: new Date()
+                });
+            }
             
             this.reset();
             document.querySelector('input[name="content"]').focus();

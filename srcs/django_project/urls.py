@@ -5,6 +5,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.storage import staticfiles_storage
+from chat import views as chat_views
 from .views import CustomLoginView
 import accounts.views
 
@@ -40,5 +41,6 @@ urlpatterns = [
 
     # Ajout des routes pour le chat
     path('chat/', include('chat.urls', namespace='chat')),
+    path('api/chat/ping/', chat_views.chat_ping, name='chat_ping'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

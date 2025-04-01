@@ -1,4 +1,3 @@
-# urls.py
 from django.urls import path
 from . import views
 
@@ -19,4 +18,6 @@ urlpatterns = [
 
     # Nouvel endpoint API pour les utilisateurs
     path('api/users/', views.api_get_users, name='api_get_users'),
+    # Utilisez votre propre function chat_ping
+    path('api/chat/ping/', views.chat_ping, name='chat_ping'),
 ]

@@ -339,3 +339,6 @@ def api_get_users(request):
     }
     
     return JsonResponse(data)
+
+def chat_ping(request):
+    return JsonResponse({'status': 'ok'})
