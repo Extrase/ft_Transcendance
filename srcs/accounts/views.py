@@ -1,218 +1,66 @@
-from django.views.generic import CreateView
-from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordChangeDoneView
-from django.urls import reverse_lazy
-from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.http import JsonResponse
-from django.contrib.auth.forms import AuthenticationForm
-from accounts.models import Profile, Notification
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse, HttpResponseRedirect
-from .models import GameStatistics, PlayerStats
-
+import json
+import os
 import requests
 import secrets
 import uuid
-import json
-import os
-
-
-from .models import Profile, Achievement
-from .forms import AchievementForm, LoginForm, SignupForm, UpdateUserForm
 from urllib.parse import urlencode
 
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import get_user_model, login, authenticate, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordChangeDoneView
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.views.generic import CreateView
+
+from .forms import AchievementForm, LoginForm, SignupForm, UpdateUserForm
+from .models import Profile, Achievement, Notification, GameStatistics, PlayerStats
+
 User = get_user_model()
+
+# ==============================
+# Vues d'authentification
+# ==============================
 
 class SignUpView(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
-def create_user_directory(user):
-    user_directory = os.path.join(settings.STATIC_ROOT, 'users', user.username)
-    if not os.path.exists(user_directory):
-        os.makedirs(user_directory)
-        print(f"Dossier créé pour l'utilisateur : {user.username}")
-
-@login_required
-def profile_view(request):
-    profile = request.user.profile
-
-    # Génération d'URL absolue pour les images
-    profile_photo_url = request.build_absolute_uri(request.user.profile_photo.url) if request.user.profile_photo else request.build_absolute_uri('/static/images/default_avatar.jpg')
-
-    profile_data = {
-        "is_authenticated": True,
-        "username": request.user.username,
-        "email": request.user.email,
-        "profile_photo": profile_photo_url,
-        "level": profile.level,
-        "games_played": profile.games_played,
-        "win_rate": profile.win_rate,
-        "total_score": profile.total_score,
-        "last_played_game": profile.last_played_game,
-        "time_played": profile.time_played,
-        "is_42_user": request.user.is_42_user,
-        "profile_gradient_start": profile.profile_gradient_start,
-        "profile_gradient_end": profile.profile_gradient_end,
-        "achievements": [
-            {"name": achievement.name, "icon": achievement.icon}
-            for achievement in profile.achievements.all()
-        ],
-        "friends": [
-            {
-                "username": friend.user.username,
-                "profile_photo": request.build_absolute_uri(friend.user.profile_photo.url)
-                if friend.user.profile_photo else request.build_absolute_uri('/static/images/default_avatar.jpg')
-            }
-            for friend in profile.friends.all()
-        ],
-        "notifications": [
-            {
-                "message": notification.message,
-                "type": notification.type,
-                "created_at": notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            for notification in profile.notifications.all()
-        ]
-    }
-
-    return JsonResponse(profile_data)
-
-@login_required
-def add_achievement(request):
-    if request.method == 'POST':
-        form = AchievementForm(request.POST)
-        if form.is_valid():
-            achievement = form.cleaned_data['achievement']
-            user_profile = get_object_or_404(Profile, user=request.user)
-            user_profile.achievements.add(achievement)
-            messages.success(request, 'Achievement added successfully.')
-            return redirect('profile')
-    else:
-        form = AchievementForm()
-    return render(request, 'add_achievement.html', {'form': form})
-
-@login_required
-def add_friend(request, username):
-    try:
-        friend_user = User.objects.get(username=username)
-        friend_profile = Profile.objects.get(user=friend_user)
-        current_user_profile = Profile.objects.get(user=request.user)
-
-        if friend_profile not in current_user_profile.friends.all():
-            current_user_profile.friends.add(friend_profile)
-            messages.success(request, f'{username} has been added to your friends')
-        else:
-            messages.info(request, f'{username} is already in your friends list')
-
-    except User.DoesNotExist:
-        messages.error(request, 'User not found')
-    except Profile.DoesNotExist:
-        messages.error(request, 'Profile not found')
-
-    return redirect('profile')
-
-@login_required
-def remove_friend(request, username):
-    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        try:
-            # Récupérer l'utilisateur correspondant au nom d'utilisateur
-            friend_user = User.objects.get(username=username)
-            # Récupérer le profil de l'ami
-            friend_profile = Profile.objects.get(user=friend_user)
-            # Récupérer le profil de l'utilisateur actuel
-            current_user_profile = request.user.profile
-            # Supprimer l'ami de la liste d'amis
-            current_user_profile.friends.remove(friend_profile)
-            return JsonResponse({'success': True})
-        except User.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'User not found'})
-        except Profile.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Profile not found'})
-    return JsonResponse({'success': False, 'error': 'Invalid request'})
-
-@login_required
-def get_notifications(request):
-    notifications = request.user.notifications.all().order_by('-created_at')[:5]
-    return JsonResponse({
-        'notifications': [{
-            'message': notif.message,
-            'type': notif.type,
-            'created_at': notif.created_at.strftime('%Y-%m-%d %H:%M')
-        } for notif in notifications]
-    })
-
-def home(request):
-    return render(request, 'home.html')
-
-def api_home(request):
-    """Retourne les données de la page d'accueil pour la SPA avec les vraies infos utilisateur."""
-
-    if request.user.is_authenticated:
-        # Récupérer le profil lié à l'utilisateur
-        profile = request.user.profile
-
-        # Construire le profil utilisateur à partir des données réelles
-        user_profile = {
-            "games_played": profile.games_played,
-            "win_rate": profile.win_rate,
-            "level": profile.level,
-            "total_score": profile.total_score,
-            "last_played_game": profile.last_played_game,
-            "time_played": profile.time_played,
-            "achievements": [achievement.name for achievement in profile.achievements.all()]
-        }
-
-        # Simuler les jeux populaires (à remplacer plus tard par de vraies données si nécessaire)
-        featured_games = [
-            {"title": "Pong", "image": "/static/images/game1.jpg", "url": "/pong"},
-            {"title": "Pong Improved", "image": "/static/images/game2.jpg", "url": "/pong-ameliore"},
-            {"title": "Bomberman", "image": "/static/images/game3.jpg", "url": "/Bomberman"}
-        ]
-
-        # Activité récente basée sur les notifications
-        recent_activity = [
-            f"{notif.user.username} - {notif.message}"
-            for notif in Notification.objects.filter(user=request.user).order_by('-created_at')[:5]
-        ]
-
-        # Données à retourner
-        data = {
-            "is_authenticated": True,
-            "username": request.user.username,
-            "profile_photo": request.user.profile_photo.url,  # Photo de profil
-            "user_profile": user_profile,
-            "featured_games": featured_games,
-            "recent_activity": recent_activity
-        }
-        return JsonResponse(data)
-
-    else:
-        # Si l'utilisateur n'est pas connecté
-        data = {
-            "is_authenticated": False,
-            "message": "You are not logged in. Log in here."
-        }
-        return JsonResponse(data)
-
-
 def login_view(request):
     if request.headers.get('HX-Request') or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render(request, 'accounts/login.html')  # Retourne juste le contenu HTML
     return render(request, 'base.html')  # Sinon, charge tout le template avec base.html
 
+def login_page(request):
+    form = LoginForm()
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user = authenticate(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password'],
+            )
+            if user is not None:
+                login(request, user)
+                user.online = True
+                user.save()
+                messages.success(request, 'You are successfully logged in.')
+                return redirect('home')
+            else:
+                messages.error(request, 'Invalid credentials.')
+    return render(
+        request, 'accounts/login.html', context={'form': form}
+    )
 
-# Extrait de views.py
 @csrf_exempt
 def api_login(request):
     if request.method == 'POST':
@@ -235,26 +83,8 @@ def logout_user(request):
         return JsonResponse({'success': True, 'message': 'Déconnexion réussie'})
     return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
-def login_page(request):
-    form = LoginForm()
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            user = authenticate(
-                username=form.cleaned_data['username'],
-                password=form.cleaned_data['password'],
-            )
-            if user is not None:
-                login(request, user)
-                user.online = True
-                user.save()
-                messages.success(request, 'You are successfully logged in.')
-                return redirect('home')
-            else:
-                messages.error(request, 'Invalid credentials.')
-    return render(
-        request, 'accounts/login.html', context={'form': form}
-    )
+def api_check_auth(request):
+    return JsonResponse({'is_authenticated': request.user.is_authenticated})
 
 @csrf_exempt
 @require_POST
@@ -285,6 +115,10 @@ def signup_view(request):
 
     return JsonResponse({'detail': 'Inscription réussie !', 'redirect_url': reverse_lazy('login')}, status=201)
 
+# ==============================
+# Authentification OAuth 42
+# ==============================
+
 def generate_random_state():
     return secrets.token_urlsafe(32)
 
@@ -301,12 +135,13 @@ def initiate_42_auth(request):
         'state': state
     }
 
+    print(f"Redirect URI used: {settings.FT_REDIRECT_URI}")
+    
     auth_url = f"{settings.AUTHORIZE_URL}?{urlencode(auth_params)}"
     return HttpResponseRedirect(auth_url)
 
-from django.shortcuts import redirect
-
 def callback_view(request):
+    print("Callback received with params:", request.GET)
     try:
         # Vérifier le state
         state = request.GET.get('state')
@@ -380,7 +215,7 @@ def callback_view(request):
                     # Download and save new photo
                     image_response = requests.get(image_url)
                     if image_response.ok:
-                        image_name = f"avatar_{user.username}.jpg"
+                        image_name = f"users/avatars/avatar_{user.username}.jpg"
                         user.profile_photo.save(
                             image_name,
                             ContentFile(image_response.content),
@@ -412,9 +247,163 @@ def callback_view(request):
     except Exception as e:
         print(f"Erreur dans callback_view: {str(e)}")
         return JsonResponse({'success': False, 'error': f'Authentication failed: {str(e)}'})
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
+
+# ==============================
+# Profil utilisateur
+# ==============================
+
+def serve_avatar(request, filename):
+    """Sert directement les fichiers d'avatar"""
+    filepath = os.path.join(settings.MEDIA_ROOT, 'users', 'avatars', filename)
+    if os.path.exists(filepath):
+        with open(filepath, 'rb') as f:
+            return HttpResponse(f.read(), content_type='image/jpeg')
+    return HttpResponse(status=404)
+
+def create_user_directory(user):
+    user_directory = os.path.join(settings.STATIC_ROOT, 'users', user.username)
+    if not os.path.exists(user_directory):
+        os.makedirs(user_directory)
+        print(f"Dossier créé pour l'utilisateur : {user.username}")
+
+@login_required
+def profile_view(request):
+    profile = request.user.profile
+
+    # Génération d'URL absolue pour les images
+    if request.user.profile_photo:
+        profile_photo_url = request.user.profile_photo.url
+    else:
+        profile_photo_url = '/static/images/default_avatar.jpg'
+
+    profile_data = {
+        "is_authenticated": True,
+        "username": request.user.username,
+        "email": request.user.email,
+        "profile_photo": profile_photo_url,
+        "level": profile.level,
+        "games_played": profile.games_played,
+        "win_rate": profile.win_rate,
+        "total_score": profile.total_score,
+        "last_played_game": profile.last_played_game,
+        "time_played": profile.time_played,
+        "is_42_user": request.user.is_42_user,
+        "profile_gradient_start": profile.profile_gradient_start,
+        "profile_gradient_end": profile.profile_gradient_end,
+        "achievements": [
+            {"name": achievement.name, "icon": achievement.icon}
+            for achievement in profile.achievements.all()
+        ],
+        "friends": [
+            {
+                "username": friend.user.username,
+                "profile_photo": friend.user.profile_photo.url if friend.user.profile_photo else '/static/images/default_avatar.jpg'
+            }
+            for friend in profile.friends.all()
+        ],
+        "notifications": [
+            {
+                "message": notification.message,
+                "type": notification.type,
+                "created_at": notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            for notification in profile.notifications.all()
+        ]
+    }
+
+    return JsonResponse(profile_data)
+
+@login_required
+def get_user_data(request):
+    user = request.user
+    data = {
+        'username': user.username,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'profile_photo': user.profile_photo.url if user.profile_photo else None,
+    }
+    return JsonResponse(data)
+
+@login_required
+@require_POST
+def update_user(request):
+    if request.user.is_42_user:
+        return JsonResponse({
+            'success': False,
+            'detail': 'Les utilisateurs 42 ne sont pas autorisés à modifier leur profil.',
+        }, status=403)
+
+    try:
+        old_avatar_path = None
+        if request.user.profile_photo:
+            old_avatar_path = request.user.profile_photo.path
+
+        form = UpdateUserForm(request.POST, request.FILES, instance=request.user)
+
+        if (form.data.get('username') != request.user.username and 
+                User.objects.filter(username=form.data.get('username')).exists()):
+                form.add_error('username', 'Ce nom d\'utilisateur est déjà pris.')
+                return JsonResponse({
+                    'success': False,
+                    'detail': 'Ce nom d\'utilisateur est déjà pris.',
+                    'errors': form.errors
+                }, status=400)
+        
+        if (form.data.get('email') != request.user.email and 
+                User.objects.filter(email=form.data.get('email')).exists()):
+                form.add_error('email', 'Cet email d\'utilisateur est déjà pris.')
+                return JsonResponse({
+                    'success': False,
+                    'detail': 'Cet email d\'utilisateur est déjà pris.',
+                    'errors': form.errors
+                }, status=400)
+        
+        if form.is_valid():
+            form.save()
+
+            # Si une nouvelle photo est envoyée ET qu'il y avait une ancienne photo
+            if 'profile_photo' in request.FILES and old_avatar_path:
+                if os.path.exists(old_avatar_path):
+                    os.remove(old_avatar_path)
+
+            return JsonResponse({
+                'success': True,
+                'detail': 'Vos informations ont été mises à jour avec succès.',
+            }, status=200)
+        else:
+            return JsonResponse({
+                'success': False,
+                'detail': 'Formulaire invalide',
+                'errors': form.errors
+            }, status=400)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'detail': f'Erreur lors de la mise à jour: {str(e)}'
+        }, status=400)
+
+@login_required
+@require_POST
+def delete_user(request):
+    try:
+        user = request.user
+        if user.profile_photo:
+            if os.path.exists(user.profile_photo.path):
+                os.remove(user.profile_photo.path)
+
+        logout(request)
+        user.delete()
+        return JsonResponse({
+            'success': True,
+            'detail': 'Compte supprimé avec succès.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'detail': f'Erreur lors de la suppression: {str(e)}'
+        }, status=400)
 
 @login_required
 def debug_profile_photo(request):
@@ -468,8 +457,77 @@ class PasswordChangeDoneAPIView(PasswordChangeDoneView):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'success': True, 'message': 'Password successfully changed.'})
 
-def api_check_auth(request):
-    return JsonResponse({'is_authenticated': request.user.is_authenticated})
+# ==============================
+# Achievements et amis
+# ==============================
+
+@login_required
+def add_achievement(request):
+    if request.method == 'POST':
+        form = AchievementForm(request.POST)
+        if form.is_valid():
+            achievement = form.cleaned_data['achievement']
+            user_profile = get_object_or_404(Profile, user=request.user)
+            user_profile.achievements.add(achievement)
+            messages.success(request, 'Achievement added successfully.')
+            return redirect('profile')
+    else:
+        form = AchievementForm()
+    return render(request, 'add_achievement.html', {'form': form})
+
+@login_required
+def add_friend(request, username):
+    try:
+        friend_user = User.objects.get(username=username)
+        friend_profile = Profile.objects.get(user=friend_user)
+        current_user_profile = Profile.objects.get(user=request.user)
+
+        if friend_profile not in current_user_profile.friends.all():
+            current_user_profile.friends.add(friend_profile)
+            messages.success(request, f'{username} has been added to your friends')
+        else:
+            messages.info(request, f'{username} is already in your friends list')
+
+    except User.DoesNotExist:
+        messages.error(request, 'User not found')
+    except Profile.DoesNotExist:
+        messages.error(request, 'Profile not found')
+
+    return redirect('profile')
+
+@login_required
+def remove_friend(request, username):
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            # Récupérer l'utilisateur correspondant au nom d'utilisateur
+            friend_user = User.objects.get(username=username)
+            # Récupérer le profil de l'ami
+            friend_profile = Profile.objects.get(user=friend_user)
+            # Récupérer le profil de l'utilisateur actuel
+            current_user_profile = request.user.profile
+            # Supprimer l'ami de la liste d'amis
+            current_user_profile.friends.remove(friend_profile)
+            return JsonResponse({'success': True})
+        except User.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'})
+        except Profile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Profile not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+@login_required
+def get_notifications(request):
+    notifications = request.user.notifications.all().order_by('-created_at')[:5]
+    return JsonResponse({
+        'notifications': [{
+            'message': notif.message,
+            'type': notif.type,
+            'created_at': notif.created_at.strftime('%Y-%m-%d %H:%M')
+        } for notif in notifications]
+    })
+
+# ==============================
+# Jeux et statistiques
+# ==============================
 
 def index(request):
     """Page principale du jeu Pong"""
@@ -479,7 +537,6 @@ def index(request):
 @login_required
 def save_game_stats(request):
     """API pour sauvegarder les statistiques d'une partie"""
-    # Augmenter le niveau du joueur de 1 tout les 10 points
     if request.method == 'POST':
         try:
             print("Received save_game_stats request")
@@ -536,14 +593,13 @@ def save_game_stats(request):
             profile.save()
 
             return JsonResponse({'success': True, 'message': 'Game stats saved successfully'})
-#
+
         except Exception as e:
             print(f"Error saving game stats: {e}")
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
-#
+
     return JsonResponse({'success': False, 'error': 'Only POST method is allowed'}, status=405)
 
-# Ajout d'une API pour récupérer les stats de Pong pour la page de profil
 @login_required
 def get_combined_profile_stats(request):
     """API pour récupérer les statistiques combinées du profil et du jeu Pong"""
@@ -634,94 +690,57 @@ def get_player_stats(request):
             'recent_games': []
         })
 
-@login_required
-@require_POST
-def update_user(request):
-    if request.user.is_42_user:
-        return JsonResponse({
-            'success': False,
-            'detail': 'Les utilisateurs 42 ne sont pas autorisés à modifier leur profil.',
-        }, status=403)
+# ==============================
+# Pages principales
+# ==============================
 
-    try:
-        old_avatar_path = None
-        if request.user.profile_photo:
-            old_avatar_path = request.user.profile_photo.path
+def home(request):
+    return render(request, 'home.html')
 
-        form = UpdateUserForm(request.POST, request.FILES, instance=request.user)
+def api_home(request):
+    """Retourne les données de la page d'accueil pour la SPA avec les vraies infos utilisateur."""
+    if request.user.is_authenticated:
+        # Récupérer le profil lié à l'utilisateur
+        profile = request.user.profile
 
-        if (form.data.get('username') != request.user.username and 
-                User.objects.filter(username=form.data.get('username')).exists()):
-                form.add_error('username', 'Ce nom d\'utilisateur est déjà pris.')
-                return JsonResponse({
-                    'success': False,
-                    'detail': 'Ce nom d\'utilisateur est déjà pris.',
-                    'errors': form.errors
-                }, status=400)
-        
-        if (form.data.get('email') != request.user.email and 
-                User.objects.filter(email=form.data.get('email')).exists()):
-                form.add_error('email', 'Cet email d\'utilisateur est déjà pris.')
-                return JsonResponse({
-                    'success': False,
-                    'detail': 'Cet email d\'utilisateur est déjà pris.',
-                    'errors': form.errors
-                }, status=400)
-        
-        if form.is_valid():
-            form.save()
+        # Construire le profil utilisateur à partir des données réelles
+        user_profile = {
+            "games_played": profile.games_played,
+            "win_rate": profile.win_rate,
+            "level": profile.level,
+            "total_score": profile.total_score,
+            "last_played_game": profile.last_played_game,
+            "time_played": profile.time_played,
+            "achievements": [achievement.name for achievement in profile.achievements.all()]
+        }
 
-            # Si une nouvelle photo est envoyée ET qu'il y avait une ancienne photo
-            if 'profile_photo' in request.FILES and old_avatar_path:
-                if os.path.exists(old_avatar_path):
-                    os.remove(old_avatar_path)
+        # Simuler les jeux populaires
+        featured_games = [
+            {"title": "Pong", "image": "/static/images/game1.jpg", "url": "/pong"},
+            {"title": "Pong Improved", "image": "/static/images/game2.jpg", "url": "/pong-ameliore"},
+            {"title": "Bomberman", "image": "/static/images/game3.jpg", "url": "/Bomberman"}
+        ]
 
-            return JsonResponse({
-                'success': True,
-                'detail': 'Vos informations ont été mises à jour avec succès.',
-            }, status=200)
-        else:
-            return JsonResponse({
-                'success': False,
-                'detail': 'Formulaire invalide',
-                'errors': form.errors
-            }, status=400)
+        # Activité récente basée sur les notifications
+        recent_activity = [
+            f"{notif.user.username} - {notif.message}"
+            for notif in Notification.objects.filter(user=request.user).order_by('-created_at')[:5]
+        ]
 
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'detail': f'Erreur lors de la mise à jour: {str(e)}'
-        }, status=400)
-
-@login_required
-def get_user_data(request):
-    user = request.user
-    data = {
-        'username': user.username,
-        'email': user.email,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'profile_photo': user.profile_photo.url if user.profile_photo else None,
-    }
-    return JsonResponse(data)
-
-@login_required
-@require_POST
-def delete_user(request):
-    try:
-        user = request.user
-        if user.profile_photo:
-            if os.path.exists(user.profile_photo.path):
-                os.remove(user.profile_photo.path)
-
-        logout(request)
-        user.delete()
-        return JsonResponse({
-            'success': True,
-            'detail': 'Compte supprimé avec succès.'
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'detail': f'Erreur lors de la suppression: {str(e)}'
-        }, status=400)
+        # Données à retourner
+        data = {
+            "is_authenticated": True,
+            "username": request.user.username,
+            "profile_photo": request.user.profile_photo.url,  # Photo de profil
+            "user_profile": user_profile,
+            "featured_games": featured_games,
+            "recent_activity": recent_activity
+        }
+        return JsonResponse(data)
+    else:
+        # Si l'utilisateur n'est pas connecté
+        data = {
+            "is_authenticated": False,
+            "message": "You are not logged in. Log in here."
+        }
+        return JsonResponse(data)

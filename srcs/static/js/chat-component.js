@@ -132,7 +132,7 @@ function initChatFunctionality() {
             if (window.chatState) {
                 window.chatState.currentUser = data.username;
                 // Initialiser WebSocket seulement après avoir défini currentUser
-                initWebSocket();
+                checkServerAndConnect(); // MODIFICATION ICI: remplacer initWebSocket() par checkServerAndConnect()
             }
         })
         .catch(error => {
@@ -140,7 +140,7 @@ function initChatFunctionality() {
             // Continuer avec un utilisateur anonyme
             if (window.chatState) {
                 window.chatState.currentUser = 'Anonyme';
-                initWebSocket();
+                checkServerAndConnect(); // MODIFICATION ICI: remplacer initWebSocket() par checkServerAndConnect()
             }
         });
 
@@ -207,8 +207,8 @@ function initWebSocket() {
 
     chatState.isConnecting = true;
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.hostname + ':8080';
-    const wsUrl = `${wsProtocol}//${wsHost}/ws/chat/`;
+    const wsPort = window.location.protocol === 'https:' ? '8443' : '8080';
+    const wsUrl = `${wsProtocol}//localhost:${wsPort}/ws/chat/`;
     console.log('Tentative de connexion WebSocket à:', wsUrl);
     chatState.socket = new WebSocket(wsUrl);
     // chatState.socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
@@ -315,14 +315,6 @@ async function checkServerAndConnect() {
         }
     }
 }
-
-// Remplacer l'appel à initWebSocket par checkServerAndConnect
-fetch('/api/profile/')
-    .then(response => response.json())
-    .then(data => {
-        window.chatState.currentUser = data.username;
-        checkServerAndConnect(); // Au lieu de initWebSocket()
-    });
 
 // Afficher des messages système
 function showSystemMessage(message) {

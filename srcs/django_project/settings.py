@@ -35,7 +35,7 @@ FT_CLIENT_SECRET = os.environ.get('FT_CLIENT_SECRET')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', 'web']
 
 
 # Application definition
@@ -189,11 +189,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = "home"
 
+LOGIN_URL = "/login/"
+
 LOGOUT_REDIRECT_URL = "home"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://localhost:8443",
     "http://localhost:8080",
 ]
 
@@ -202,7 +205,10 @@ AUTH_USER_MODEL = 'accounts.User'
 # URL de redirection vers l'autorisation 42
 AUTHORIZE_URL = 'https://api.intra.42.fr/oauth/authorize'
 TOKEN_URL = 'https://api.intra.42.fr/oauth/token'
-FT_REDIRECT_URI = 'http://localhost:8000/callback'
+FT_REDIRECT_URI = 'https://localhost:8443/callback'
+# FT_REDIRECT_URI = 'http://localhost:8000/callback'
+FRONTEND_URL = 'https://localhost:8443'
+
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -224,4 +230,10 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
-FRONTEND_URL = 'http://localhost:8080'
+# Paramètres HTTPS
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000  # 1 an
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True

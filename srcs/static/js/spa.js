@@ -400,7 +400,7 @@ async function loadProfilePage() {
 
 function generateProfileContent(data) {
     const profilePhotoUrl = data.profile_photo ? 
-        data.profile_photo.replace('http://localhost/', 'http://localhost:8080/') : 
+        data.profile_photo.replace('http://localhost/', 'https://localhost:8443/') : 
         '/static/images/default_avatar.jpg';
     
     const html = `
@@ -679,7 +679,7 @@ function loadLoginPage() {
         const link = event.target.closest('#connect-42-link');
         if (link) {
             event.preventDefault();
-            window.location.href = '/api/42/';
+            window.location.href = 'https://localhost:8443/api/42/';
         }
     });
     
@@ -768,7 +768,7 @@ async function loadUpdateUserPage() {
         const userData = await response.json();
 
         const profilePhotoUrl = userData.profile_photo ? 
-            userData.profile_photo.replace('http://localhost/', 'http://localhost:8080/') : 
+            userData.profile_photo.replace('http://localhost/', 'https://localhost:8443/') : 
             '';
 
         document.querySelector('#app').innerHTML = `

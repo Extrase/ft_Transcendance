@@ -17,4 +17,5 @@ urlpatterns = [
     path('remove_friend/<str:username>/', remove_friend, name='remove_friend'),
     path('get_notifications/', get_notifications, name='get_notifications'),
     path('auth/delete_user/', views.delete_user, name='delete_user'),
+    path('media/users/avatars/<str:filename>', accounts.views.serve_avatar, name='serve_avatar'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
