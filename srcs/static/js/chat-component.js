@@ -108,22 +108,40 @@ function generateChatInterface(data) {
 // Initialisation des fonctionnalités du chat
 function initChatFunctionality() {
     // État global pour le chat
-    window.chatState = {
-        socket: null,
-        currentUser: null,
-        currentRecipient: null,
-        isConnecting: false,
-        reconnectAttempts: 0,
-        maxReconnectAttempts: 3,
-        serverOffline: false
-    };
+    if (!window.chatState) {
+        window.chatState = {
+            socket: null,
+            currentUser: null,
+            currentRecipient: null,
+            isConnecting: false,
+            reconnectAttempts: 0,
+            maxReconnectAttempts: 3,
+            serverOffline: false
+        };
+    }
 
     // Récupérer le nom d'utilisateur actuel
     fetch('/api/profile/')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erreur de récupération du profil: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            window.chatState.currentUser = data.username;
-            initWebSocket();
+            if (window.chatState) {
+                window.chatState.currentUser = data.username;
+                // Initialiser WebSocket seulement après avoir défini currentUser
+                initWebSocket();
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des données utilisateur:', error);
+            // Continuer avec un utilisateur anonyme
+            if (window.chatState) {
+                window.chatState.currentUser = 'Anonyme';
+                initWebSocket();
+            }
         });
 
     // Demander la permission pour les notifications si pas encore décidé
@@ -155,9 +173,24 @@ function initChatFunctionality() {
     window.createGameInviteModal = createGameInviteModal;
 }
 
+function ensureChatState() {
+    if (!window.chatState) {
+        window.chatState = {
+            socket: null,
+            currentUser: null,
+            currentRecipient: null,
+            isConnecting: false,
+            reconnectAttempts: 0,
+            maxReconnectAttempts: 3,
+            serverOffline: false
+        };
+    }
+    return window.chatState;
+}
+
 // Initialisation WebSocket
 function initWebSocket() {
-    const chatState = window.chatState;
+    const chatState = ensureChatState();
     
     if (chatState.serverOffline) {
         showSystemMessage('Le serveur semble être arrêté. Veuillez rafraîchir la page quand le serveur sera disponible.');
@@ -173,7 +206,12 @@ function initWebSocket() {
     }
 
     chatState.isConnecting = true;
-    chatState.socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.hostname + ':8080';
+    const wsUrl = `${wsProtocol}//${wsHost}/ws/chat/`;
+    console.log('Tentative de connexion WebSocket à:', wsUrl);
+    chatState.socket = new WebSocket(wsUrl);
+    // chatState.socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
     
     chatState.socket.onopen = function() {
         console.log('WebSocket connecté');
@@ -200,36 +238,91 @@ function initWebSocket() {
     };
 
     chatState.socket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        console.log('Message WebSocket reçu:', data);
-        
-        if (data.type === 'game_invite') {
-            console.log('Invitation de jeu reçue:', data);
-            createGameInviteModal(data.sender, data.sender_id);
-        } else if (data.type === 'chat_message') {
-            // Vérifier si le message concerne la conversation actuellement affichée
-            const isRelevantMessage = (
-                // C'est un message envoyé par nous à la personne que nous avons ouverte
-                (data.is_sent === true && parseInt(data.recipient_id) === chatState.currentRecipient?.id) ||
-                // OU c'est un message reçu de la personne avec qui nous discutons
-                (data.is_sent !== true && parseInt(data.sender_id) === chatState.currentRecipient?.id)
-            );
+        try {
+            const data = JSON.parse(e.data);
+            console.log('Message WebSocket reçu:', data);
             
-            if (isRelevantMessage) {
-                // Ajouter le message à la conversation active
-                addMessageToChat(data);
-            } else {
-                // Notification pour un message d'une autre conversation
-                notifyNewMessage(data);
+            // S'assurer que chatState existe avant de l'utiliser
+            const chatState = ensureChatState();
+            
+            if (data.type === 'game_invite') {
+                console.log('Invitation de jeu reçue:', data);
+                if (typeof createGameInviteModal === 'function') {
+                    createGameInviteModal(data.sender, data.sender_id);
+                }
+            } else if (data.type === 'chat_message') {
+                // Vérifier si le message concerne la conversation actuellement affichée
+                const isRelevantMessage = (
+                    // C'est un message envoyé par nous à la personne que nous avons ouverte
+                    (data.is_sent === true && parseInt(data.recipient_id) === chatState.currentRecipient?.id) ||
+                    // OU c'est un message reçu de la personne avec qui nous discutons
+                    (data.is_sent !== true && parseInt(data.sender_id) === chatState.currentRecipient?.id)
+                );
+                
+                if (isRelevantMessage) {
+                    // Ajouter le message à la conversation active
+                    addMessageToChat(data);
+                } else {
+                    // Notification pour un message d'une autre conversation
+                    notifyNewMessage(data);
+                }
             }
+        } catch (error) {
+            console.error('Erreur lors du traitement du message WebSocket:', error);
         }
     };
 
     chatState.socket.onerror = function(error) {
         console.error('Erreur WebSocket:', error);
         chatState.isConnecting = false;
+        
+        // Journaliser plus d'informations sur l'erreur
+        console.log('URL WebSocket:', chatState.socket.url);
+        console.log('État de la connexion:', chatState.socket.readyState);
+        
+        // Afficher un message d'erreur plus descriptif
+        showSystemMessage(`Erreur de connexion WebSocket. Vérifiez que le serveur est en cours d'exécution sur ${chatState.socket.url}`);
     };
 }
+
+async function checkServerAndConnect() {
+    if (!window.chatState) {
+        console.error('chatState n\'est pas défini');
+        return;
+    }
+    
+    try {
+        // Vérifier si le serveur répond avant d'essayer WebSocket
+        const response = await fetch('/api/chat/ping/', { 
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+            // Le serveur répond, on peut essayer WebSocket
+            initWebSocket();
+        } else {
+            console.error('Le serveur est disponible mais a répondu avec une erreur:', response.status);
+            showSystemMessage('Erreur de connexion au serveur de chat.');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la vérification du serveur:', error);
+        showSystemMessage('Le serveur de chat semble être indisponible. Veuillez réessayer plus tard.');
+        
+        if (window.chatState) {
+            window.chatState.serverOffline = true;
+            showServerOfflineAlert();
+        }
+    }
+}
+
+// Remplacer l'appel à initWebSocket par checkServerAndConnect
+fetch('/api/profile/')
+    .then(response => response.json())
+    .then(data => {
+        window.chatState.currentUser = data.username;
+        checkServerAndConnect(); // Au lieu de initWebSocket()
+    });
 
 // Afficher des messages système
 function showSystemMessage(message) {

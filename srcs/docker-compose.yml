@@ -8,7 +8,7 @@ services:
               python manage.py collectstatic --no-input &&
               mkdir -p /code/mediafiles/users/avatars &&
               chmod -R 777 /code/mediafiles &&
-              gunicorn django_project.wsgi:application --bind 0.0.0.0:8000"
+              daphne -b 0.0.0.0 -p 8000 django_project.asgi:application"
     networks:
       - default
     volumes:
