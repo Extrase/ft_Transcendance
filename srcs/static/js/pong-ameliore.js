@@ -13,6 +13,8 @@ let gameData = {
     gameDuration: null, // Durée de la partie
 };
 
+let speedMultiplier = 1; // Multiplicateur de vitesse (1 = normal, >1 = rapide, <1 = lente)
+
 export function init(){
 const firstInstruct = document.getElementById("firstInstruct");
 const secondInstruct = document.getElementById("secondInstruct");
@@ -113,8 +115,8 @@ let focusIndexes = {
     difficulty: { value: 0 }
 };
 
-const POWERUP_RADIUS = 20; // Taille du power-up
-const POWERUP_DURATION = 5000; // Durée du power-up en millisecondes (5 secondes)
+const POWERUP_RADIUS = 30; // Taille du power-up
+const POWERUP_DURATION = 10000; // Durée du power-up en millisecondes (10 secondes)
 
 let powerUps = []; // Tableau pour stocker les power-ups actifs
 let areControlsInverted = false; // Variable globale pour les controles
@@ -366,6 +368,7 @@ function activatePowerUp(type, ball) {
     let timeoutId;
 
     const resetFunction = () => {
+        if (pongadvover === true) return;
         // Réinitialiser toutes les modifications
         game.player.height = PLAYER_HEIGHT;
         game.computer.height = PLAYER_HEIGHT;
@@ -375,31 +378,31 @@ function activatePowerUp(type, ball) {
         if (game.balls.length > 1) {
             game.balls.splice(1, game.balls.length - 1);
         }
+        // Réinitialiser le multiplicateur de vitesse
+        speedMultiplier = 1;
         isPowerUpActive = false;
-        displayActivePowerUp(null); // <-- Ajouter cette ligne
+        displayActivePowerUp(null);
     };
 
     switch (type) {
         case POWERUP_TYPES.BIG_PADDLE:
-            case POWERUP_TYPES.BIG_PADDLE:
             powerUpName = "Palette géante";
-            // Utiliser le ball passé en paramètre
             (ball.lastHit === 'player' ? game.player : game.computer).height = PLAYER_HEIGHT * 1.5;
             timeoutId = setTimeout(resetFunction, POWERUP_DURATION);
             break;
 
         case POWERUP_TYPES.SMALL_PADDLE:
             powerUpName = "Palette rétrécie";
-            // Utiliser le ball passé en paramètre
             (ball.lastHit === 'player' ? game.computer : game.player).height = PLAYER_HEIGHT * 0.5;
             timeoutId = setTimeout(resetFunction, POWERUP_DURATION);
             break;
 
         case POWERUP_TYPES.SLOW_BALL:
             powerUpName = "Balle lente";
+            speedMultiplier = 0.5;
             game.balls.forEach(ball => {
-                ball.speed.x *= 0.5;
-                ball.speed.y *= 0.5;
+                ball.speed.x *= speedMultiplier;
+                ball.speed.y *= speedMultiplier;
                 // Garantir une vitesse minimale
                 ball.speed.x = Math.max(Math.abs(ball.speed.x), 1) * Math.sign(ball.speed.x);
                 ball.speed.y = Math.max(Math.abs(ball.speed.y), 1) * Math.sign(ball.speed.y);
@@ -409,9 +412,10 @@ function activatePowerUp(type, ball) {
 
         case POWERUP_TYPES.FAST_BALL:
             powerUpName = "Balle rapide";
+            speedMultiplier = 3;
             game.balls.forEach(ball => {
-                ball.speed.x = Math.min(ball.speed.x * 2, MAX_BALL_SPEED);
-                ball.speed.y = Math.min(ball.speed.y * 2, MAX_BALL_SPEED);
+                ball.speed.x = Math.min(ball.speed.x * speedMultiplier, MAX_BALL_SPEED);
+                ball.speed.y = Math.min(ball.speed.y * speedMultiplier, MAX_BALL_SPEED);
             });
             timeoutId = setTimeout(resetFunction, POWERUP_DURATION);
             break;
@@ -450,6 +454,7 @@ function activatePowerUp(type, ball) {
 }
 
 function displayActivePowerUp(powerUpName) {
+    if (pongadvover === true) return;
     const powerUpDisplay = document.getElementById("powerUpDisplay");
     const activePowerUpName = document.getElementById("activePowerUpName");
 
@@ -747,7 +752,7 @@ function drawPowerUps() {
     powerUps.forEach(powerUp => {
         context.beginPath();
         context.arc(powerUp.x, powerUp.y, POWERUP_RADIUS, 0, Math.PI * 2);
-        context.fillStyle = "yellow"; // Couleur du power-up
+        context.fillStyle = "magenta"; // Couleur du power-up
         context.fill();
         context.closePath();
     });
@@ -811,12 +816,13 @@ function ballMove() {
 }
 
 function collide(player, ball) {
+    if (pongadvover === true) return;
     const paddleX = player === game.player ? 10 : canvas.width - PLAYER_WIDTH - 10;
-    const paddleHeight = player === game.player ? game.player.height : game.computer.height; // Prendre la hauteur actuelle
+    const paddleHeight = player === game.player ? game.player.height : game.computer.height; 
 
     if (
         ball.y + ball.r < player.y ||
-        ball.y - ball.r > player.y + paddleHeight || // Utiliser la hauteur dynamique
+        ball.y - ball.r > player.y + paddleHeight || 
         (player === game.player && ball.x - ball.r > paddleX + PLAYER_WIDTH) ||
         (player !== game.player && ball.x + ball.r < paddleX)
     ) {
@@ -839,20 +845,29 @@ function collide(player, ball) {
         } else {
             winner = gameMode === 'multi' ? "Player 2" : "L'ordinateur";
         }
+        if (pongadvover === true) return;
             drawWinningMessage(winner);
             // Enregistrer les données de la partie
             endGame(winner);
         }
+        if (pongadvover === true) return;
         displayGameData();
         resetBall(ball);
     } else {
         ball.speed.x *= -1.2;
         ball.lastHit = player === game.player ? 'player' : 'computer';
-        // ball.speed.y *= -1.2;
         
-        // Limiter la vitesse
-        ball.speed.x = Math.sign(ball.speed.x) * Math.min(Math.abs(ball.speed.x), MAX_BALL_SPEED);
-        ball.speed.y = Math.sign(ball.speed.y) * Math.min(Math.abs(ball.speed.y), MAX_BALL_SPEED);
+        // Appliquer le multiplicateur de vitesse actif
+        let maxSpeed = MAX_BALL_SPEED;
+        if (speedMultiplier !== 1) {
+            if (speedMultiplier > 1) {
+                maxSpeed = MAX_BALL_SPEED * speedMultiplier;
+            }
+        }
+        
+        ball.speed.x = Math.sign(ball.speed.x) * Math.min(Math.abs(ball.speed.x), maxSpeed);
+        ball.speed.y = Math.sign(ball.speed.y) * Math.min(Math.abs(ball.speed.y), maxSpeed);
+        
         changeDirection(ball, player.y);
     }
 }

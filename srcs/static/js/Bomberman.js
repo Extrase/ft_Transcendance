@@ -729,6 +729,7 @@ function draw() {
 // Gestion des contrôles
 function handleControlKeydown(e) {
   if (isGameOver) return;
+  if (bombover === true) return;
 
   const moves = {
     ArrowUp: [0, -1],
