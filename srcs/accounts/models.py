@@ -14,7 +14,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     profile_photo = models.ImageField(
         verbose_name='Avatar',
-        upload_to='users/avatars/',
+        upload_to='',
         blank=True,
         null=True,
         default='users/avatars/default_avatar.jpg'

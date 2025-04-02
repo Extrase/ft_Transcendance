@@ -267,7 +267,7 @@ function loadSignUpPage() {
             <div class="form-group">
                 <label for="id_profile_photo" data-i18n="signup.profile_photo"></label>
                 <input type="file" id="id_profile_photo" name="profile_photo" 
-                    class="form-control" accept="image/*" required>
+                    class="form-control" accept="image/*">
             </div>
             <div class="form-group">
                 <label for="id_first_name" data-i18n="signup.first_name"></label>
@@ -387,6 +387,8 @@ async function loadProfilePage() {
         }
 
         document.querySelector('#app').innerHTML = generateProfileContent(data);
+        initAddFriendForm();
+        initRemoveFriendForms();
         updateTranslations();
     } catch (error) {
         console.error('Erreur lors du chargement du profil:', error);
@@ -503,17 +505,24 @@ function generateProfileContent(data) {
 
                     <div class="friends-section">
                         <h3><span data-i18n="profile.my_friends"></span> (<span class="stat-value">${data.friends.length}</span>)</h3>
+                        <div class="friend-form-container">
+                            <h4>Ajouter un ami</h4>
+                            <form id="addFriendForm" class="friend-form">
+                                <input
+                                    type="text"
+                                    name="username"
+                                    id="friendUsername"
+                                    placeholder="Nom d'utilisateur"
+                                    required
+                                    pattern="[A-Za-z0-9_]{3,}"
+                                    title="Le nom d'utilisateur doit contenir au moins 3 caractères (lettres, chiffres ou underscore)"
+                                >
+                                <button type="submit">Envoyer la demande</button>
+                            </form>
+                            <div id="friendRequestStatus" class="friend-form-message"></div>
+                        </div>
                         <div class="friends-grid">
-                            ${data.friends.map(friend => `
-                                <div class="friend-card">
-                                    <div class="friend-avatar">
-                                        <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" alt="${friend.username}">
-                                    </div>
-                                    <div class="friend-info">
-                                        <span class="friend-name">${friend.username}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ${generateFriendsList(data.friends)}
                         </div>
                     </div>
 
@@ -1351,3 +1360,126 @@ document.addEventListener('DOMContentLoaded', function() {
         darkModeBtn.addEventListener('click', toggleDarkMode);
     }
 });
+
+function initAddFriendForm() {
+    const form = document.getElementById('addFriendForm');
+    const statusDiv = document.getElementById('friendRequestStatus');
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('friendUsername').value;
+
+            try {
+                const response = await fetch(`/add-friend/${username}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const data = await response.json();
+
+                // Afficher le message de statut
+                statusDiv.textContent = data.message;
+                statusDiv.className = `friend-form-message ${data.status}`;
+
+                // Si l'ajout est réussi, vider le champ
+                if (data.status === 'success') {
+                    document.getElementById('friendUsername').value = '';
+                    // Optionnel : rafraîchir la liste des amis
+                    router.navigate('/profile');
+                }
+
+            } catch (error) {
+                statusDiv.textContent = "Une erreur s'est produite";
+                statusDiv.className = 'friend-form-message error';
+            }
+        });
+    }
+}
+
+function initRemoveFriendForms() {
+    const forms = document.querySelectorAll('.remove-friend-form');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = form.dataset.username;
+            let statusDiv = document.getElementById(`removeFriendStatus-${username}`);
+
+            // Créer le statusDiv s'il n'existe pas
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = `removeFriendStatus-${username}`;
+                statusDiv.className = 'friend-form-message';
+                form.insertAdjacentElement('afterend', statusDiv);
+            }
+
+            try {
+                const response = await fetch(`/remove_friend/${encodeURIComponent(username)}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Réponse reçue:", data);
+
+                if (data.status === 'success') {
+                    const friendElement = form.closest('.friend-card');
+                    if (friendElement) {
+                        friendElement.classList.add('fade-out');
+                        setTimeout(() => {
+                            friendElement.remove();
+                            // Vérifier si la liste est vide
+                            const friendsList = document.querySelector('.friends-list');
+                            if (friendsList && friendsList.children.length === 0) {
+                                friendsList.innerHTML = '<p>Pas encore d\'amis.</p>';
+                            }
+                        }, 300);
+                        router.navigate('/profile');
+                    }
+                }
+
+                statusDiv.textContent = data.message;
+                statusDiv.className = `friend-form-message ${data.status}`;
+
+            } catch (error) {
+                console.error("Erreur détaillée:", error);
+                statusDiv.textContent = "Une erreur s'est produite lors de la suppression";
+                statusDiv.className = 'friend-form-message error';
+            }
+        });
+    });
+}
+
+function generateFriendsList(friends) {
+    return friends.map(friend => `
+        <div class="friend-card">
+            <div class="friend-avatar">
+                <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" alt="${friend.username}">
+            </div>
+            <div class="friend-info">
+                <span class="friend-name">${friend.username}</span>
+                <span class="friend-status ${friend.online ? 'online' : 'offline'}">
+                    ${friend.online ? 'Online' : 'Offline'}
+                </span>
+                <form id="removeFriendForm" class="remove-friend-form" data-username="${friend.username}">
+                    <button class="remove-friend-btn" type="submit">Supprimer</button>
+                </form>
+                <div id="removeFriendStatus-${friend.username}" class="friend-form-message"></div>
+            </div>
+        </div>
+    `).join('')
+}

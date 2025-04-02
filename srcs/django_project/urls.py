@@ -32,6 +32,8 @@ urlpatterns = [
     path('callback/', accounts.views.callback_view, name='callback_42'),
     path('api/profile/', accounts.views.profile_view, name='profile_view'),
     path('debug-photo/', accounts.views.debug_profile_photo, name='debug_photo'),
+    path('add-friend/<str:username>/', accounts.views.add_friend, name='add_friend'),
+    path('remove_friend/<str:username>', accounts.views.remove_friend, name='remove_friend'),
 
     # Routes Pong
     path('pong/', accounts.views.index, name='pong_index'),  # Page principale du jeu Pong
