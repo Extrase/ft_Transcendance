@@ -65,6 +65,7 @@ def profile_view(request):
         "last_played_game": profile.last_played_game,
         "time_played": profile.time_played,
         "is_42_user": request.user.is_42_user,
+        "online": request.user.online,
         "profile_gradient_start": profile.profile_gradient_start,
         "profile_gradient_end": profile.profile_gradient_end,
         "achievements": [
@@ -74,6 +75,7 @@ def profile_view(request):
         "friends": [
             {
                 "username": friend.user.username,
+                "online": friend.user.online,
                 "profile_photo": request.build_absolute_uri(friend.user.profile_photo.url)
                 if friend.user.profile_photo else request.build_absolute_uri('/static/images/default_avatar.jpg')
             }
@@ -150,22 +152,39 @@ def add_friend(request, username):
 
 @login_required
 def remove_friend(request, username):
-    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
-            # Récupérer l'utilisateur correspondant au nom d'utilisateur
             friend_user = User.objects.get(username=username)
-            # Récupérer le profil de l'ami
             friend_profile = Profile.objects.get(user=friend_user)
-            # Récupérer le profil de l'utilisateur actuel
-            current_user_profile = request.user.profile
-            # Supprimer l'ami de la liste d'amis
-            current_user_profile.friends.remove(friend_profile)
-            return JsonResponse({'success': True})
+            current_user_profile = Profile.objects.get(user=request.user)
+
+            if friend_profile in current_user_profile.friends.all():
+                current_user_profile.friends.remove(friend_profile)
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'{username} a été retiré de vos amis'
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'{username} n\'est pas dans votre liste d\'amis'
+                })
+
         except User.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'User not found'})
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Utilisateur non trouvé'
+            }, status=404)
         except Profile.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Profile not found'})
-    return JsonResponse({'success': False, 'error': 'Invalid request'})
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Profil non trouvé'
+            }, status=404)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Requête invalide'
+    }, status=400)
 
 @login_required
 def get_notifications(request):
@@ -249,6 +268,8 @@ def api_login(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
+            user.online = True
+            user.save()
             return JsonResponse({'success': True})
         return JsonResponse({'success': False, 'error': 'Invalid credentials'})
 
@@ -256,8 +277,10 @@ def api_login(request):
 
 @csrf_exempt
 def logout_user(request):
+    user = request.user
     if request.method == 'POST':
         logout(request)
+        user.online = False
         return JsonResponse({'success': True, 'message': 'Déconnexion réussie'})
     return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
@@ -308,6 +331,8 @@ def signup_view(request):
 
     # Connecter l'utilisateur automatiquement après l'inscription
     login(request, user)
+    user.online = True
+    user.save()
 
     return JsonResponse({'detail': 'Inscription réussie !', 'redirect_url': reverse_lazy('login')}, status=201)
 
@@ -427,6 +452,8 @@ def callback_view(request):
 
         # Connecter l'utilisateur
         login(request, user)
+        user.online = True
+        user.save()
         user_directory = os.path.join(settings.MEDIA_ROOT, 'users', user.username)
         os.makedirs(user_directory, exist_ok=True)
         return redirect('/')
@@ -458,6 +485,7 @@ def debug_profile_photo(request):
         'media_root': settings.MEDIA_ROOT,
         'media_url': settings.MEDIA_URL,
         'is_42_user': user.is_42_user,
+        'online': user.online,
     })
 
 @csrf_exempt
@@ -612,6 +640,7 @@ def get_combined_profile_stats(request):
         "last_played_game": profile.last_played_game,
         "time_played": profile.time_played,
         "is_42_user": request.user.is_42_user,
+        "online": request.user.online,
         "profile_gradient_start": profile.profile_gradient_start,
         "profile_gradient_end": profile.profile_gradient_end,
         "achievements": [
@@ -746,6 +775,7 @@ def delete_user(request):
             if os.path.exists(user.profile_photo.path):
                 os.remove(user.profile_photo.path)
 
+        user.online = False
         logout(request)
         user.delete()
         return JsonResponse({

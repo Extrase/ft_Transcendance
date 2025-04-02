@@ -90,7 +90,7 @@ const router = {
                 this.navigate('/');
             }
         });
-      
+
         const initialPath = normalizePath(window.location.pathname);
         const normalizedInitialPath = initialPath.endsWith('/') ? initialPath.slice(0, -1) : initialPath;
 
@@ -352,6 +352,7 @@ async function loadProfilePage() {
             document.querySelector('#app').innerHTML = generateProfileContent(data);
             updateTranslations();
             initAddFriendForm();
+            initRemoveFriendForms();
         } else {
             document.querySelector('#app').innerHTML = '<h2>Please log in to view your profile</h2>';
         }
@@ -489,16 +490,7 @@ function generateProfileContent(data) {
                             <div id="friendRequestStatus" class="friend-form-message"></div>
                         </div>
                         <div class="friends-grid">
-                            ${data.friends.map(friend => `
-                                <div class="friend-card">
-                                    <div class="friend-avatar">
-                                        <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" alt="${friend.username}">
-                                    </div>
-                                    <div class="friend-info">
-                                        <span class="friend-name">${friend.username}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ${generateFriendsList(data.friends)}
                         </div>
                     </div>
 
@@ -1241,7 +1233,7 @@ router.on('/Bomberman', async () => {
         <div id="game">
             <canvas id="canvas" width="600" height="600"></canvas>
         </div>
-        
+
          <div id="gameStats">
             <h2>Statistiques</h2>
             <p>Parties jouées : <span id="totalGames">0</span></p>
@@ -1349,4 +1341,87 @@ function initAddFriendForm() {
             }
         });
     }
+}
+
+function initRemoveFriendForms() {
+    const forms = document.querySelectorAll('.remove-friend-form');
+
+    forms.forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = form.dataset.username;
+            let statusDiv = document.getElementById(`removeFriendStatus-${username}`);
+
+            // Créer le statusDiv s'il n'existe pas
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = `removeFriendStatus-${username}`;
+                statusDiv.className = 'friend-form-message';
+                form.insertAdjacentElement('afterend', statusDiv);
+            }
+
+            try {
+                const response = await fetch(`/remove_friend/${encodeURIComponent(username)}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Réponse reçue:", data);
+
+                if (data.status === 'success') {
+                    const friendElement = form.closest('.friend-card');
+                    if (friendElement) {
+                        friendElement.classList.add('fade-out');
+                        setTimeout(() => {
+                            friendElement.remove();
+                            // Vérifier si la liste est vide
+                            const friendsList = document.querySelector('.friends-list');
+                            if (friendsList && friendsList.children.length === 0) {
+                                friendsList.innerHTML = '<p>Pas encore d\'amis.</p>';
+                            }
+                        }, 300);
+                        router.navigate('/profile');
+                    }
+                }
+
+                statusDiv.textContent = data.message;
+                statusDiv.className = `friend-form-message ${data.status}`;
+
+            } catch (error) {
+                console.error("Erreur détaillée:", error);
+                statusDiv.textContent = "Une erreur s'est produite lors de la suppression";
+                statusDiv.className = 'friend-form-message error';
+            }
+        });
+    });
+}
+
+function generateFriendsList(friends) {
+    return friends.map(friend => `
+        <div class="friend-card">
+            <div class="friend-avatar">
+                <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" alt="${friend.username}">
+            </div>
+            <div class="friend-info">
+                <span class="friend-name">${friend.username}</span>
+                <span class="friend-status ${friend.online ? 'online' : 'offline'}">
+                    ${friend.online ? 'Online' : 'Offline'}
+                </span>
+                <form id="removeFriendForm" class="remove-friend-form" data-username="${friend.username}">
+                    <button class="remove-friend-btn" type="submit">Supprimer</button>
+                </form>
+                <div id="removeFriendStatus-${friend.username}" class="friend-form-message"></div>
+            </div>
+        </div>
+    `).join('')
 }

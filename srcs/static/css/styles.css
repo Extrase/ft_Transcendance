@@ -1,8 +1,8 @@
 /* Variables globales pour les couleurs et les thèmes */
 html, body {
     overflow: auto; /* Défilement uniquement si nécessaire */
-    height: 100%;   
-    margin: 0;      
+    height: 100%;
+    margin: 0;
 }
 
 :root {
@@ -1885,4 +1885,92 @@ canvas {
 .friend-form-message.info {
     background-color: rgba(102, 192, 244, 0.2);
     color: #66c0f4;
+}
+
+.friend-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.friend-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.remove-friend-btn {
+    padding: 5px 10px;
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.remove-friend-btn:hover {
+    background-color: #cc0000;
+}
+
+.friend-item {
+    transition: all 0.3s ease;
+    opacity: 1;
+}
+
+.friend-item.fade-out {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.remove-friend-btn {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.remove-friend-btn:hover {
+    background-color: var(--danger-hover-color);
+}
+
+.friend-status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.friend-status.online {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+.friend-status.offline {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+/* Animation pour le statut en ligne */
+.friend-status.online {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+    }
 }
