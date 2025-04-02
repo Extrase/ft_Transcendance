@@ -83,5 +83,10 @@
     "first_name": "Prénom :",
     "last_name": "Nom :",
     "updated": "Mettre à jour" 
+  },
+  "languages": {
+    "english": "Anglais",
+    "french": "Français",
+    "spanish": "Espagnol"
   }
 }

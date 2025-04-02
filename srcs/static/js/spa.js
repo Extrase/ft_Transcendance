@@ -1,4 +1,3 @@
-
 // i18n
 
 // Probleme connexion ~ connexion comportement page, rechargement profile au lieu de home
@@ -21,6 +20,12 @@ i18n
     backend: {
       loadPath: '/static/locales/{{lng}}/{{ns}}.json'
     }
+  }).then(() => {
+    // Only setup the language selector after i18n has been initialized
+    setupLanguageSelector();
+    
+    // Also update any translations that may be in the DOM already
+    updateTranslations();
   });
 
 function updateTranslations() {
@@ -39,6 +44,35 @@ i18n.on('languageChanged', (lng) => {
 });
 
 let currentLanguage = i18n.language;
+
+function setupLanguageSelector() {
+    const languageOptions = document.querySelectorAll('.language-option');
+    
+    // Mettre à jour l'option active
+    const setActiveLanguage = (lang) => {
+        languageOptions.forEach(option => {
+            if (option.dataset.lang === lang) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+    };
+    
+    // Initialiser avec la langue actuelle - added safety check
+    const currentLang = i18n.language ? i18n.language.split('-')[0] : 'en';
+    setActiveLanguage(currentLang);
+    
+    // Ajouter les écouteurs d'événements
+    languageOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const lang = this.dataset.lang;
+            i18n.changeLanguage(lang);
+            setActiveLanguage(lang);
+        });
+    });
+}
+
 // app.js
 
 function normalizePath(path) {
@@ -180,10 +214,16 @@ async function updateNavbar() {
             }
 
             // Gestion du changement de langue
-            document.getElementById('language-toggle').addEventListener('click', () => {
-                const newLang = i18n.language === 'en' ? 'fr' : 'en';
-                i18n.changeLanguage(newLang);
-            });
+            const languageSelector = document.getElementById('language-selector');
+            if (languageSelector) {
+                // Définir la valeur actuelle dans le sélecteur
+                languageSelector.value = i18n.language.split('-')[0];
+                
+                // Ajouter l'écouteur d'événement pour le changement de langue
+                languageSelector.addEventListener('change', function() {
+                    i18n.changeLanguage(this.value);
+                });
+            }
             
             updateTranslations();
         }

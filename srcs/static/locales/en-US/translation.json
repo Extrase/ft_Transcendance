@@ -83,5 +83,10 @@
     "first_name": "First Name :",
     "last_name": "Last Name :",
     "updated": "Update" 
+  },
+  "languages": {
+    "english": "English",
+    "french": "French",
+    "spanish": "Spanish"
   }
 }

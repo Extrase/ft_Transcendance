@@ -483,14 +483,73 @@ function initializeGame() {
             {x: GRID_SIZE-2, y: GRID_SIZE-2} // bas-droit
         ];
         
+        // positions coin
+        let position = corners[index % corners.length];
+        
+        // possible de définir une position 
+        const directions = [[0,1], [1,0], [0,-1], [-1,0]];
+        
+        // Choisir la meilleure position
+        let bestPosition = position;
+        let maxFreeDirections = countFreeDirections(position.x, position.y, directions);
+        
+        // Si la position de départ n'a pas assez de directions libres
+        if (maxFreeDirections < 2) {
+            // Chercher une meilleure position
+            for (let offsetY = -3; offsetY <= 3; offsetY++) {
+                for (let offsetX = -3; offsetX <= 3; offsetX++) {
+                    const newX = position.x + offsetX;
+                    const newY = position.y + offsetY;
+                    
+                    
+                    if (newX <= 0 || newX >= GRID_SIZE-1 || newY <= 0 || newY >= GRID_SIZE-1) 
+                        continue;
+                    
+                
+                    if (gameState.grid[newY][newX] === 'wall')
+                        continue;
+                    
+                    const freeDirs = countFreeDirections(newX, newY, directions);
+                    
+                    
+                    if (freeDirs > maxFreeDirections) {
+                        bestPosition = {x: newX, y: newY};
+                        maxFreeDirections = freeDirs;
+                        
+                        if (freeDirs >= 2) break;
+                    }
+                }
+                if (maxFreeDirections >= 2) break;
+            }
+        }
+        
+        // Force the chosen position to be empty
+        gameState.grid[bestPosition.y][bestPosition.x] = 'empty';
+        
         return {
-            x: corners[index % corners.length].x,
-            y: corners[index % corners.length].y,
+            x: bestPosition.x,
+            y: bestPosition.y,
             speed: difficultySelect === 'es' ? 1500 : 1000,
             timer: 0,
-            bombChance: 0.15 // 15% de chance de poser une bombe
+            bombChance: 0.15
         };
     });
+
+    // Helper function to count how many free directions are available from a position
+    function countFreeDirections(x, y, directions) {
+        return directions.filter(([dx, dy]) => {
+            const newX = x + dx;
+            const newY = y + dy;
+            
+            // Check bounds
+            if (newX <= 0 || newX >= GRID_SIZE-1 || newY <= 0 || newY >= GRID_SIZE-1)
+                return false;
+            
+            // Consider position free if it's empty or can be made empty (not a wall)
+            return gameState.grid[newY][newX] !== 'wall';
+        }).length;
+    }
+
   gameState.bombs = [];
   gameState.explosions = [];
   startGameLoop();
