@@ -48,7 +48,7 @@ const quitStButton = document.getElementById("qsButton");
 
 const title = document.getElementById("title");
 const pong = document.getElementById("game");
-const MAX_BALL_SPEED = 2; // Vitesse maximale autorisée
+const MAX_BALL_SPEED = 6; // Vitesse maximale autorisée
 
 let DIFFICULTY = 1;
 let isGameOver = false;
@@ -425,27 +425,29 @@ document.addEventListener("keydown", handleDocumentKeydown);
 function initializeGame() {
     gameData.gameStartTime = Date.now();
 
-    game = {
-        player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
-        computer: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
-        ball: {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            prevX: canvas.width / 2, // precedent emplacement
-            prevY: canvas.height / 2, // precedent emplacement
-            r: BALL_RADIUS,
-            speed: { x: BALL_INITIAL_SPEED, y: BALL_INITIAL_SPEED },
-            lastHit: null
-        }
-    };
-
+    
     // Configuration de la difficulté
-    if (difficultySelect === "es") {
-        DIFFICULTY = 0.5; // Facile
-    } else {
-        DIFFICULTY = 1; // Moyen et Difficile
-    }
+if (difficultySelect === "es") {
+    DIFFICULTY = 1; // Facile
+} else if (difficultySelect === "md") {
+    DIFFICULTY = 2; // Moyen
+} else {
+    DIFFICULTY = 3; // Difficile
+}
 
+game = {
+    player: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+    computer: { y: canvas.height / 2 - PLAYER_HEIGHT / 2, score: 0 },
+    ball: {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        prevX: canvas.width / 2, // precedent emplacement
+        prevY: canvas.height / 2, // precedent emplacement
+        r: BALL_RADIUS,
+        speed: { x: BALL_INITIAL_SPEED * DIFFICULTY, y: BALL_INITIAL_SPEED * DIFFICULTY },
+        lastHit: null
+    }
+};
     isGameOver = false;
     isGamming = true;
 
@@ -475,7 +477,7 @@ function keyUpHandler(event) {
 }
 // Déplacement de l'ordinateur
 function computerMoveEsMd() {
-    const SPEED = 5 * DIFFICULTY;
+    const SPEED = 5;
 
     const targetY = game.ball.y - PLAYER_HEIGHT / 2;
     const diff = targetY - game.computer.y;
@@ -489,7 +491,7 @@ function computerMoveEsMd() {
 }
 
 function computerMoveHard() {
-    const SPEED = 4 * DIFFICULTY; // La vitesse augmente avec la difficulté
+    const SPEED = 5; // La vitesse augmente avec la difficulté
 
     let predictedY = game.ball.y + (game.ball.speed.y * (canvas.width - game.ball.x)) / game.ball.speed.x;
 
@@ -664,7 +666,7 @@ function collide(player) {
             // Ajuster la direction en fonction du point d'impact
             const hitPosition = (yAtCollision - player.y) / PLAYER_HEIGHT;
             const angle = hitPosition * Math.PI / 2;
-            ball.speed.y = Math.sin(angle) * 5;
+            ball.speed.y = Math.sin(angle) * (5 * DIFFICULTY / 2);
             
             // Corriger la position pour éviter le chevauchement
             ball.x = paddleEdgeX;
@@ -830,8 +832,8 @@ function resetBall() {
     const { ball, player, computer } = game;
     ball.x = canvas.width / 2;
     ball.y = canvas.height / 2;
-    ball.speed.x = BALL_INITIAL_SPEED * (Math.random() > 0.5 ? 1 : -1);
-    ball.speed.y = BALL_INITIAL_SPEED * (Math.random() > 0.5 ? 1 : -1);
+    ball.speed.x = BALL_INITIAL_SPEED * DIFFICULTY * (Math.random() > 0.5 ? 1 : -1);
+    ball.speed.y = BALL_INITIAL_SPEED * DIFFICULTY * (Math.random() > 0.5 ? 1 : -1);
     player.y = canvas.height / 2 - PLAYER_HEIGHT / 2;
     computer.y = canvas.height / 2 - PLAYER_HEIGHT / 2;
 }
