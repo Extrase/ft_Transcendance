@@ -1332,7 +1332,7 @@ function initAddFriendForm() {
                 if (data.status === 'success') {
                     document.getElementById('friendUsername').value = '';
                     // Optionnel : rafraîchir la liste des amis
-                    // updateFriendsList();
+                    router.navigate('/profile');
                 }
 
             } catch (error) {
