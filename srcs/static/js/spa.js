@@ -6,6 +6,42 @@ export let bombover = true;
 export let pongadvover = true;
 export let pongover = true;
 
+window.addEventListener('beforeunload', function(event) {
+    // Nettoyer les ressources et les intervalles
+    if (window.friendsStatusInterval) {
+        clearInterval(window.friendsStatusInterval);
+        window.friendsStatusInterval = null;
+    }
+    
+    // Nettoyer les jeux en cours si nécessaire
+    if (currentGame && typeof currentGame.destroy === 'function') {
+        currentGame.destroy();
+    }
+    
+    // Réinitialiser l'état des jeux
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
+});
+
+window.addEventListener('load', function() {
+    // Initialiser les variables d'état
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
+    
+    // Vérifier si le routeur a été initialisé correctement
+    if (!router || !router.routes) {
+        console.error("Erreur: le routeur n'est pas initialisé correctement");
+        // Réinitialiser la page si nécessaire
+        setTimeout(() => window.location.href = '/', 100);
+        return;
+    }
+    
+    // Vérifier l'authentification et mettre à jour la navbar
+    updateNavbar().catch(err => console.error("Erreur lors de la mise à jour de la navbar:", err));
+});
+
 const i18n = i18next.createInstance();
 
 i18n
@@ -120,24 +156,37 @@ const router = {
 
     start() {
         window.addEventListener('popstate', () => {
-            const currentPath = normalizePath(window.location.pathname);
-            const normalizedPath = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
-            
-            if (this.routes[normalizedPath]) {
-                this.routes[normalizedPath]();
-                updateTranslations();
-            } else {
+            try {
+                const currentPath = normalizePath(window.location.pathname);
+                const normalizedPath = currentPath.endsWith('/') ? currentPath.slice(0, -1) : currentPath;
+                
+                if (this.routes[normalizedPath]) {
+                    this.routes[normalizedPath]();
+                    updateTranslations();
+                } else {
+                    console.warn(`Route non trouvée: ${normalizedPath}, redirection vers l'accueil`);
+                    this.navigate('/');
+                }
+            } catch (error) {
+                console.error("Erreur dans la gestion de l'événement popstate:", error);
                 this.navigate('/');
             }
         });
     
-        const initialPath = normalizePath(window.location.pathname);
-        const normalizedInitialPath = initialPath.endsWith('/') ? initialPath.slice(0, -1) : initialPath;
-        
-        if (this.routes[normalizedInitialPath]) {
-            this.routes[normalizedInitialPath]();
-        } else {
-            this.navigate('/');
+        try {
+            const initialPath = normalizePath(window.location.pathname);
+            const normalizedInitialPath = initialPath.endsWith('/') ? initialPath.slice(0, -1) : initialPath;
+            
+            if (this.routes[normalizedInitialPath]) {
+                this.routes[normalizedInitialPath]();
+            } else {
+                console.warn(`Route initiale non trouvée: ${normalizedInitialPath}, redirection vers l'accueil`);
+                this.navigate('/');
+            }
+        } catch (error) {
+            console.error("Erreur lors du démarrage du routeur:", error);
+            // En cas d'erreur, essayez de charger la page d'accueil
+            loadHomePage();
         }
     }
 };
@@ -611,6 +660,12 @@ function addNewFriendsToUI(newFriends) {
     if (!friendsGrid) {
         console.error("Impossible de trouver la grille d'amis");
         return;
+    }
+    
+    // Supprimer l'état vide s'il existe et qu'on ajoute des amis
+    const emptyState = friendsGrid.querySelector('.empty-state');
+    if (emptyState && newFriends.length > 0) {
+        emptyState.remove();
     }
     
     // Mettre à jour le compteur d'amis
@@ -1917,13 +1972,26 @@ function initAddFriendForm() {
                 statusDiv.textContent = data.message;
                 statusDiv.className = `friend-form-message ${data.status}`;
 
-                // Si l'ajout est réussi, vider le champ
+                // Si l'ajout est réussi, vider le champ et mettre à jour l'interface
                 if (data.status === 'success') {
                     document.getElementById('friendUsername').value = '';
-                    // Optionnel : rafraîchir la liste des amis
-                    router.navigate('/profile');
+                    
+                    // Vérifier si l'état vide est présent et le supprimer
+                    const friendsGrid = document.querySelector('.friends-grid');
+                    const emptyState = friendsGrid.querySelector('.empty-state');
+                    
+                    if (emptyState) {
+                        emptyState.remove();
+                    }
+                    
+                    // Ajouter le nouvel ami à l'interface sans recharger la page
+                    if (data.friend) {
+                        addNewFriendsToUI([data.friend]);
+                    } else {
+                        // Si le serveur ne renvoie pas les données de l'ami, actualiser la liste
+                        fetchFriendsStatus();
+                    }
                 }
-
             } catch (error) {
                 statusDiv.textContent = "Une erreur s'est produite";
                 statusDiv.className = 'friend-form-message error';

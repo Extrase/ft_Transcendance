@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.generic.base import TemplateView, RedirectView
+from django.shortcuts import render
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -8,6 +9,10 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from chat import views as chat_views
 from .views import CustomLoginView
 import accounts.views
+
+def spa_fallback(request, path=None):
+    """Gère toutes les routes SPA non définies explicitement"""
+    return render(request, 'base.html')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -48,4 +53,5 @@ urlpatterns = [
     path('chat/', include('chat.urls', namespace='chat')),
     path('api/chat/ping/', chat_views.chat_ping, name='chat_ping'),
 
+    re_path(r'^(?P<path>.*)$', spa_fallback, name='spa-fallback'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
