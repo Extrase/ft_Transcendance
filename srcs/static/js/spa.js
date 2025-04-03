@@ -105,6 +105,11 @@ const router = {
     navigate(path) {
         const normalizedPath = normalizePath(path);
         if (this.routes[normalizedPath]) {
+            // Si on quitte la page de profil, nettoyer l'intervalle
+            if (window.location.pathname === '/profile' && normalizedPath !== '/profile') {
+                cleanupProfilePage();
+            }
+            
             window.history.pushState({}, '', path);
             this.routes[normalizedPath]();
             updateTranslations();
@@ -430,6 +435,7 @@ async function loadProfilePage() {
         initAddFriendForm();
         initRemoveFriendForms();
         updateTranslations();
+        initFriendsStatusRefresh();
     } catch (error) {
         console.error('Erreur lors du chargement du profil:', error);
         document.querySelector('#app').innerHTML = `
@@ -440,8 +446,80 @@ async function loadProfilePage() {
     }
 }
 
+
+
+function initFriendsStatusRefresh() {
+    if (window.friendsStatusInterval) {
+        clearInterval(window.friendsStatusInterval);
+    }
+    
+    window.friendsStatusInterval = setInterval(async () => {
+        if (window.location.pathname === '/profile') {
+            try {
+                const response = await fetch('/api/friends-status/', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateFriendsStatusUI(data.friends);
+                } else if (response.status === 401) {
+                    // Si l'utilisateur n'est pas authentifié, rediriger vers login
+                    window.location.href = '/login/';
+                } else {
+                    console.error('Erreur lors de la récupération des statuts:', response.status);
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'actualisation des statuts des amis:', error);
+            }
+        }
+    }, 10000);
+}
+
+function updateFriendsStatusUI(friends) {
+    const friendCards = document.querySelectorAll('.friend-card');
+    
+    friendCards.forEach(card => {
+        const nameElement = card.querySelector('.friend-name');
+        const statusElement = card.querySelector('.friend-status');
+        
+        if (nameElement && statusElement) {
+            const username = nameElement.textContent;
+            const friend = friends.find(f => f.username === username);
+            
+            if (friend) {
+                const currentStatus = statusElement.classList.contains('online');
+                
+                if (currentStatus !== friend.online) {
+                    // Le statut a changé, ajouter l'animation
+                    statusElement.classList.add('status-changed');
+                    
+                    // Supprimer la classe d'animation après qu'elle soit terminée
+                    setTimeout(() => {
+                        statusElement.classList.remove('status-changed');
+                    }, 500);
+                }
+                
+                // Mettre à jour la classe et le texte du statut
+                statusElement.className = `friend-status ${friend.online ? 'online' : 'offline'}`;
+                statusElement.textContent = friend.online ? 'Online' : 'Offline';
+            }
+        }
+    });
+}
+
+function cleanupProfilePage() {
+    if (window.friendsStatusInterval) {
+        clearInterval(window.friendsStatusInterval);
+        window.friendsStatusInterval = null;
+    }
+}
+
 function generateProfileContent(data) {
-    const profilePhotoUrl = data.profile_photo ? 
+    const profilePhotoUrl = (data.profile_photo && !data.profile_photo.includes('default_avatar.jpg')) ? 
         data.profile_photo.replace('http://localhost/', 'https://localhost:8443/') : 
         '/static/images/default_avatar.jpg';
     
@@ -1508,7 +1586,9 @@ function generateFriendsList(friends) {
     return friends.map(friend => `
         <div class="friend-card">
             <div class="friend-avatar">
-                <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" alt="${friend.username}">
+                <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" 
+                     alt="${friend.username}"
+                     onerror="this.src='/static/images/default_avatar.jpg'">
             </div>
             <div class="friend-info">
                 <span class="friend-name">${friend.username}</span>

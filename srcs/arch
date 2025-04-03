@@ -1,0 +1,339 @@
+.:
+total 44
+drwxr-xr-x 10 myassine 2022_paris 4096 Apr  3 02:45 .
+drwxr-xr-x  5 myassine 2022_paris   58 Apr  3 02:45 ..
+drwxr-xr-x  4 myassine 2022_paris  191 Apr  3 02:03 accounts
+-rw-r--r--  1 myassine 2022_paris    0 Apr  3 02:45 arch
+drwxr-xr-x  2 myassine 2022_paris   62 Apr  3 02:03 certs
+drwxr-xr-x  5 myassine 2022_paris 4096 Apr  3 02:03 chat
+drwxr-xr-x  3 myassine 2022_paris  124 Apr  3 02:03 django_project
+-rw-r--r--  1 myassine 2022_paris 1550 Apr  3 02:03 docker-compose.yml
+-rw-r--r--  1 myassine 2022_paris  703 Apr  3 02:03 Dockerfile
+-rw-r--r--  1 myassine 2022_paris   22 Apr  3 02:01 .dockerignore
+-rw-r--r--  1 myassine 2022_paris 6148 Apr  3 02:03 .DS_Store
+-rw-r--r--  1 myassine 2022_paris  444 Apr  3 02:03 .env
+-rwxr-xr-x  1 myassine 2022_paris  670 Apr  3 02:01 manage.py
+drwxr-xr-x  2 myassine 2022_paris    6 Apr  3 02:05 mediafiles
+-rw-r--r--  1 myassine 2022_paris 2363 Apr  3 02:42 nginx.conf
+-rw-r--r--  1 myassine 2022_paris  166 Apr  3 02:03 requirements.txt
+-rw-r--r--  1 myassine 2022_paris    0 Apr  3 02:01 secrets
+drwxr-xr-x  9 myassine 2022_paris  135 Apr  3 02:03 static
+drwxr-xr-x  2 myassine 2022_paris    6 Apr  3 02:02 staticfiles
+drwxr-xr-x  2 myassine 2022_paris   68 Apr  3 02:03 templates
+
+./accounts:
+total 72
+drwxr-xr-x  4 myassine 2022_paris   191 Apr  3 02:03 .
+drwxr-xr-x 10 myassine 2022_paris  4096 Apr  3 02:45 ..
+-rw-r--r--  1 myassine 2022_paris  1428 Apr  3 02:01 admin.py
+-rw-r--r--  1 myassine 2022_paris   201 Apr  3 02:01 apps.py
+-rw-r--r--  1 myassine 2022_paris  1068 Apr  3 02:01 forms.py
+-rw-r--r--  1 myassine 2022_paris     0 Apr  3 02:01 __init__.py
+drwxr-xr-x  3 myassine 2022_paris  4096 Apr  3 02:30 migrations
+-rw-r--r--  1 myassine 2022_paris  3666 Apr  3 02:03 models.py
+drwxr-xr-x  2 myassine 2022_paris  4096 Apr  3 02:01 __pycache__
+-rw-r--r--  1 myassine 2022_paris   524 Apr  3 02:01 signals.py
+-rw-r--r--  1 myassine 2022_paris    60 Apr  3 02:01 tests.py
+-rw-r--r--  1 myassine 2022_paris   947 Apr  3 02:03 urls.py
+-rw-r--r--  1 myassine 2022_paris 32210 Apr  3 02:24 views.py
+
+./accounts/migrations:
+total 48
+drwxr-xr-x 3 myassine 2022_paris 4096 Apr  3 02:30 .
+drwxr-xr-x 4 myassine 2022_paris  191 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 4612 Apr  3 02:01 0001_initial.py
+-rw-r--r-- 1 myassine 2022_paris  593 Apr  3 02:01 0002_profile_profile_gradient_end_and_more.py
+-rw-r--r-- 1 myassine 2022_paris 1099 Apr  3 02:01 0003_notification_profile_notifications.py
+-rw-r--r-- 1 myassine 2022_paris  468 Apr  3 02:01 0004_alter_user_profile_photo.py
+-rw-r--r-- 1 myassine 2022_paris 1828 Apr  3 02:01 0005_gamestatistics_playerstats.py
+-rw-r--r-- 1 myassine 2022_paris 1493 Apr  3 02:01 0006_playerstats_win_ratio_and_more.py
+-rw-r--r-- 1 myassine 2022_paris  485 Apr  3 02:01 0007_alter_user_profile_photo.py
+-rw-r--r-- 1 myassine 2022_paris  502 Apr  3 02:01 0008_alter_user_profile_photo.py
+-rw-r--r-- 1 myassine 2022_paris  402 Apr  3 02:03 0009_gamestatistics_duration.py
+-rw-r--r-- 1 myassine 2022_paris  487 Apr  3 02:30 0010_alter_user_profile_photo.py
+-rw-r--r-- 1 myassine 2022_paris    0 Apr  3 02:01 __init__.py
+drwxr-xr-x 2 myassine 2022_paris   74 Apr  3 02:01 __pycache__
+
+./accounts/migrations/__pycache__:
+total 12
+drwxr-xr-x 2 myassine 2022_paris   74 Apr  3 02:01 .
+drwxr-xr-x 3 myassine 2022_paris 4096 Apr  3 02:30 ..
+-rw-r--r-- 1 myassine 2022_paris 3307 Apr  3 02:01 0001_initial.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris  165 Apr  3 02:01 __init__.cpython-310.pyc
+
+./accounts/__pycache__:
+total 40
+drwxr-xr-x 2 myassine 2022_paris 4096 Apr  3 02:01 .
+drwxr-xr-x 4 myassine 2022_paris  191 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 1727 Apr  3 02:01 admin.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris  592 Apr  3 02:01 apps.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris 1318 Apr  3 02:01 forms.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris  157 Apr  3 02:01 __init__.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris 2881 Apr  3 02:01 models.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris  762 Apr  3 02:01 signals.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris  829 Apr  3 02:01 urls.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris 6089 Apr  3 02:01 views.cpython-310.pyc
+
+./certs:
+total 12
+drwxr-xr-x  2 myassine 2022_paris   62 Apr  3 02:03 .
+drwxr-xr-x 10 myassine 2022_paris 4096 Apr  3 02:45 ..
+-rw-r--r--  1 myassine 2022_paris 1269 Apr  3 02:03 nginx-selfsigned.crt
+-rw-r--r--  1 myassine 2022_paris 1704 Apr  3 02:03 nginx-selfsigned.key
+
+./chat:
+total 60
+drwxr-xr-x  5 myassine 2022_paris  4096 Apr  3 02:03 .
+drwxr-xr-x 10 myassine 2022_paris  4096 Apr  3 02:45 ..
+-rwxr-xr-x  1 myassine 2022_paris    63 Apr  3 02:01 admin.py
+-rwxr-xr-x  1 myassine 2022_paris   140 Apr  3 02:01 apps.py
+-rwxr-xr-x  1 myassine 2022_paris  1756 Apr  3 02:03 consumers.py
+-rwxr-xr-x  1 myassine 2022_paris    43 Apr  3 02:01 __init__.py
+drwxr-xr-x  3 myassine 2022_paris  4096 Apr  3 02:01 migrations
+-rwxr-xr-x  1 myassine 2022_paris  2740 Apr  3 02:01 models.py
+drwxr-xr-x  2 myassine 2022_paris  4096 Apr  3 02:01 __pycache__
+-rwxr-xr-x  1 myassine 2022_paris   463 Apr  3 02:03 routing.py
+drwxr-xr-x  3 myassine 2022_paris    18 Apr  3 02:01 templates
+-rwxr-xr-x  1 myassine 2022_paris    49 Apr  3 02:01 tests.py
+-rwxr-xr-x  1 myassine 2022_paris  1128 Apr  3 02:03 urls.py
+-rwxr-xr-x  1 myassine 2022_paris 12053 Apr  3 02:03 views.py
+
+./chat/migrations:
+total 48
+drwxr-xr-x 3 myassine 2022_paris 4096 Apr  3 02:01 .
+drwxr-xr-x 5 myassine 2022_paris 4096 Apr  3 02:03 ..
+-rwxr-xr-x 1 myassine 2022_paris 1213 Apr  3 02:01 0001_initial.py
+-rw-r--r-- 1 myassine 2022_paris 2777 Apr  3 02:01 0002_remove_message_room_remove_message_user_blockeduser_and_more.py
+-rw-r--r-- 1 myassine 2022_paris 3597 Apr  3 02:01 0003_remove_directmessage_receiver_and_more.py
+-rw-r--r-- 1 myassine 2022_paris 1015 Apr  3 02:01 0004_message_is_game_invite_alter_message_timestamp_and_more.py
+-rw-r--r-- 1 myassine 2022_paris 1116 Apr  3 02:01 0005_alter_gameinvite_unique_together_and_more.py
+-rw-r--r-- 1 myassine 2022_paris  804 Apr  3 02:01 0006_remove_gameinvite_chat_gamein_sender__a32b23_idx_and_more.py
+-rw-r--r-- 1 myassine 2022_paris  336 Apr  3 02:01 0007_delete_userprofile.py
+-rw-r--r-- 1 myassine 2022_paris  769 Apr  3 02:01 0008_userprofile.py
+-rw-r--r-- 1 myassine 2022_paris  550 Apr  3 02:01 0009_userprofile_blocked_users.py
+-rwxr-xr-x 1 myassine 2022_paris    0 Apr  3 02:01 __init__.py
+drwxr-xr-x 2 myassine 2022_paris 4096 Apr  3 02:01 __pycache__
+
+./chat/migrations/__pycache__:
+total 44
+drwxr-xr-x 2 myassine 2022_paris 4096 Apr  3 02:01 .
+drwxr-xr-x 3 myassine 2022_paris 4096 Apr  3 02:01 ..
+-rwxr-xr-x 1 myassine 2022_paris 1057 Apr  3 02:01 0001_initial.cpython-310.pyc
+-rwxr-xr-x 1 myassine 2022_paris 1874 Apr  3 02:01 0001_initial.cpython-312.pyc
+-rwxr-xr-x 1 myassine 2022_paris 1815 Apr  3 02:01 0001_initial.cpython-313.pyc
+-rw-r--r-- 1 myassine 2022_paris 3563 Apr  3 02:01 0002_remove_message_room_remove_message_user_blockeduser_and_more.cpython-313.pyc
+-rw-r--r-- 1 myassine 2022_paris 4371 Apr  3 02:01 0003_remove_directmessage_receiver_and_more.cpython-313.pyc
+-rwxr-xr-x 1 myassine 2022_paris  125 Apr  3 02:01 __init__.cpython-310.pyc
+-rwxr-xr-x 1 myassine 2022_paris  171 Apr  3 02:01 __init__.cpython-312.pyc
+-rwxr-xr-x 1 myassine 2022_paris  129 Apr  3 02:01 __init__.cpython-313.pyc
+
+./chat/__pycache__:
+total 80
+drwxr-xr-x 2 myassine 2022_paris 4096 Apr  3 02:01 .
+drwxr-xr-x 5 myassine 2022_paris 4096 Apr  3 02:03 ..
+-rwxr-xr-x 1 myassine 2022_paris  155 Apr  3 02:01 admin.cpython-310.pyc
+-rwxr-xr-x 1 myassine 2022_paris  204 Apr  3 02:01 admin.cpython-312.pyc
+-rwxr-xr-x 1 myassine 2022_paris  162 Apr  3 02:01 admin.cpython-313.pyc
+-rwxr-xr-x 1 myassine 2022_paris  389 Apr  3 02:01 apps.cpython-310.pyc
+-rwxr-xr-x 1 myassine 2022_paris  462 Apr  3 02:01 apps.cpython-312.pyc
+-rwxr-xr-x 1 myassine 2022_paris  478 Apr  3 02:01 apps.cpython-313.pyc
+-rw-r--r-- 1 myassine 2022_paris 1982 Apr  3 02:01 consumers.cpython-313.pyc
+-rwxr-xr-x 1 myassine 2022_paris  114 Apr  3 02:01 __init__.cpython-310.pyc
+-rwxr-xr-x 1 myassine 2022_paris  160 Apr  3 02:01 __init__.cpython-312.pyc
+-rwxr-xr-x 1 myassine 2022_paris  118 Apr  3 02:01 __init__.cpython-313.pyc
+-rwxr-xr-x 1 myassine 2022_paris 1068 Apr  3 02:01 models.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris 2825 Apr  3 02:01 models.cpython-312.pyc
+-rw-r--r-- 1 myassine 2022_paris 3503 Apr  3 02:01 models.cpython-313.pyc
+-rw-r--r-- 1 myassine 2022_paris  363 Apr  3 02:01 routing.cpython-313.pyc
+-rwxr-xr-x 1 myassine 2022_paris  428 Apr  3 02:01 urls.cpython-312.pyc
+-rw-r--r-- 1 myassine 2022_paris  707 Apr  3 02:01 urls.cpython-313.pyc
+-rwxr-xr-x 1 myassine 2022_paris  546 Apr  3 02:01 views.cpython-312.pyc
+-rw-r--r-- 1 myassine 2022_paris 3359 Apr  3 02:01 views.cpython-313.pyc
+
+./chat/templates:
+total 4
+drwxr-xr-x 3 myassine 2022_paris   18 Apr  3 02:01 .
+drwxr-xr-x 5 myassine 2022_paris 4096 Apr  3 02:03 ..
+drwxr-xr-x 3 myassine 2022_paris   57 Apr  3 02:01 chat
+
+./chat/templates/chat:
+total 36
+drwxr-xr-x 3 myassine 2022_paris    57 Apr  3 02:01 .
+drwxr-xr-x 3 myassine 2022_paris    18 Apr  3 02:01 ..
+-rw-r--r-- 1 myassine 2022_paris 28717 Apr  3 02:01 chat.html
+-rw-r--r-- 1 myassine 2022_paris   335 Apr  3 02:01 profile.html
+drwxr-xr-x 3 myassine 2022_paris    18 Apr  3 02:01 static
+
+./chat/templates/chat/static:
+total 0
+drwxr-xr-x 3 myassine 2022_paris 18 Apr  3 02:01 .
+drwxr-xr-x 3 myassine 2022_paris 57 Apr  3 02:01 ..
+drwxr-xr-x 2 myassine 2022_paris 22 Apr  3 02:01 chat
+
+./chat/templates/chat/static/chat:
+total 4
+drwxr-xr-x 2 myassine 2022_paris  22 Apr  3 02:01 .
+drwxr-xr-x 3 myassine 2022_paris  18 Apr  3 02:01 ..
+-rw-r--r-- 1 myassine 2022_paris 843 Apr  3 02:01 chat.css
+
+./django_project:
+total 28
+drwxr-xr-x  3 myassine 2022_paris  124 Apr  3 02:03 .
+drwxr-xr-x 10 myassine 2022_paris 4096 Apr  3 02:45 ..
+-rw-r--r--  1 myassine 2022_paris  667 Apr  3 02:03 asgi.py
+-rw-r--r--  1 myassine 2022_paris    0 Apr  3 02:01 __init__.py
+drwxr-xr-x  2 myassine 2022_paris  155 Apr  3 02:01 __pycache__
+-rw-r--r--  1 myassine 2022_paris 6206 Apr  3 02:03 settings.py
+-rw-r--r--  1 myassine 2022_paris 2995 Apr  3 02:24 urls.py
+-rw-r--r--  1 myassine 2022_paris  359 Apr  3 02:01 views.py
+-rw-r--r--  1 myassine 2022_paris  405 Apr  3 02:01 wsgi.py
+
+./django_project/__pycache__:
+total 20
+drwxr-xr-x 2 myassine 2022_paris  155 Apr  3 02:01 .
+drwxr-xr-x 3 myassine 2022_paris  124 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris  163 Apr  3 02:01 __init__.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris 3361 Apr  3 02:01 settings.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris 1294 Apr  3 02:01 urls.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris  764 Apr  3 02:01 views.cpython-310.pyc
+-rw-r--r-- 1 myassine 2022_paris  582 Apr  3 02:01 wsgi.cpython-310.pyc
+
+./mediafiles:
+total 4
+drwxr-xr-x  2 myassine 2022_paris    6 Apr  3 02:05 .
+drwxr-xr-x 10 myassine 2022_paris 4096 Apr  3 02:45 ..
+
+./static:
+total 20
+drwxr-xr-x  9 myassine 2022_paris  135 Apr  3 02:03 .
+drwxr-xr-x 10 myassine 2022_paris 4096 Apr  3 02:45 ..
+drwxr-xr-x  2 myassine 2022_paris  111 Apr  3 02:01 assets
+drwxr-xr-x  2 myassine 2022_paris   56 Apr  3 02:03 css
+-rw-r--r--  1 myassine 2022_paris 6148 Apr  3 02:01 .DS_Store
+drwxr-xr-x  2 myassine 2022_paris 4096 Apr  3 02:03 favicon_io
+drwxr-xr-x  2 myassine 2022_paris   30 Apr  3 02:01 fonts
+drwxr-xr-x  2 myassine 2022_paris  139 Apr  3 02:01 images
+drwxr-xr-x  2 myassine 2022_paris  151 Apr  3 02:03 js
+drwxr-xr-x  8 myassine 2022_paris   75 Apr  3 02:03 locales
+-rw-r--r--  1 myassine 2022_paris 2663 Apr  3 02:01 pong.html
+
+./static/assets:
+total 44
+drwxr-xr-x 2 myassine 2022_paris   111 Apr  3 02:01 .
+drwxr-xr-x 9 myassine 2022_paris   135 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris  9835 Apr  3 02:01 block.png
+-rw-r--r-- 1 myassine 2022_paris   275 Apr  3 02:01 bomb.png
+-rw-r--r-- 1 myassine 2022_paris   449 Apr  3 02:01 enemy.png
+-rw-r--r-- 1 myassine 2022_paris 14288 Apr  3 02:01 explosion.png
+-rw-r--r-- 1 myassine 2022_paris   435 Apr  3 02:01 player.png
+-rw-r--r-- 1 myassine 2022_paris  2129 Apr  3 02:01 wall.png
+
+./static/css:
+total 60
+drwxr-xr-x 2 myassine 2022_paris    56 Apr  3 02:03 .
+drwxr-xr-x 9 myassine 2022_paris   135 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris  7304 Apr  3 02:01 chat.css
+-rw-r--r-- 1 myassine 2022_paris  5795 Apr  3 02:01 pong.css
+-rw-r--r-- 1 myassine 2022_paris 42844 Apr  3 02:27 styles.css
+
+./static/favicon_io:
+total 88
+drwxr-xr-x 2 myassine 2022_paris  4096 Apr  3 02:03 .
+drwxr-xr-x 9 myassine 2022_paris   135 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 11251 Apr  3 02:03 android-chrome-192x192.png
+-rw-r--r-- 1 myassine 2022_paris 30344 Apr  3 02:03 android-chrome-512x512.png
+-rw-r--r-- 1 myassine 2022_paris 10559 Apr  3 02:03 apple-touch-icon.png
+-rw-r--r-- 1 myassine 2022_paris   488 Apr  3 02:03 favicon-16x16.png
+-rw-r--r-- 1 myassine 2022_paris  1224 Apr  3 02:03 favicon-32x32.png
+-rw-r--r-- 1 myassine 2022_paris 15406 Apr  3 02:03 favicon.ico
+-rw-r--r-- 1 myassine 2022_paris   263 Apr  3 02:03 site.webmanifest
+
+./static/fonts:
+total 84
+drwxr-xr-x 2 myassine 2022_paris    30 Apr  3 02:01 .
+drwxr-xr-x 9 myassine 2022_paris   135 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 82480 Apr  3 02:01 PressStart2P.ttf
+
+./static/images:
+total 508
+drwxr-xr-x 2 myassine 2022_paris    139 Apr  3 02:01 .
+drwxr-xr-x 9 myassine 2022_paris    135 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris  14370 Apr  3 02:01 default_avatar.jpg
+-rw-r--r-- 1 myassine 2022_paris 106043 Apr  3 02:01 game1.jpg
+-rw-r--r-- 1 myassine 2022_paris  92044 Apr  3 02:01 game2.jpg
+-rw-r--r-- 1 myassine 2022_paris 256994 Apr  3 02:01 game3.jpg
+-rw-r--r-- 1 myassine 2022_paris  17765 Apr  3 02:01 UserBlackBgWhite.jpg
+-rw-r--r-- 1 myassine 2022_paris  24004 Apr  3 02:01 UserYelloBgWhite.jpg
+
+./static/js:
+total 252
+drwxr-xr-x 2 myassine 2022_paris   151 Apr  3 02:03 .
+drwxr-xr-x 9 myassine 2022_paris   135 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 28890 Apr  3 02:03 Bomberman.js
+-rw-r--r-- 1 myassine 2022_paris 32902 Apr  3 02:03 chat-component.js
+-rw-r--r-- 1 myassine 2022_paris   698 Apr  3 02:01 events.js
+-rw-r--r-- 1 myassine 2022_paris 37841 Apr  3 02:01 game.js
+-rw-r--r-- 1 myassine 2022_paris   903 Apr  3 02:01 menu.js
+-rw-r--r-- 1 myassine 2022_paris 36983 Apr  3 02:03 pong-ameliore.js
+-rw-r--r-- 1 myassine 2022_paris 31990 Apr  3 02:03 pong.js
+-rw-r--r-- 1 myassine 2022_paris 64094 Apr  3 02:41 spa.js
+
+./static/locales:
+total 0
+drwxr-xr-x 8 myassine 2022_paris  75 Apr  3 02:03 .
+drwxr-xr-x 9 myassine 2022_paris 135 Apr  3 02:03 ..
+drwxr-xr-x 2 myassine 2022_paris  30 Apr  3 02:03 en
+drwxr-xr-x 2 myassine 2022_paris  30 Apr  3 02:03 en-US
+drwxr-xr-x 2 myassine 2022_paris  30 Apr  3 02:03 es
+drwxr-xr-x 2 myassine 2022_paris  30 Apr  3 02:03 es-ES
+drwxr-xr-x 2 myassine 2022_paris  30 Apr  3 02:03 fr
+drwxr-xr-x 2 myassine 2022_paris  30 Apr  3 02:03 fr-FR
+
+./static/locales/en:
+total 4
+drwxr-xr-x 2 myassine 2022_paris   30 Apr  3 02:03 .
+drwxr-xr-x 8 myassine 2022_paris   75 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 2879 Apr  3 02:03 translation.json
+
+./static/locales/en-US:
+total 4
+drwxr-xr-x 2 myassine 2022_paris   30 Apr  3 02:03 .
+drwxr-xr-x 8 myassine 2022_paris   75 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 2879 Apr  3 02:03 translation.json
+
+./static/locales/es:
+total 4
+drwxr-xr-x 2 myassine 2022_paris   30 Apr  3 02:03 .
+drwxr-xr-x 8 myassine 2022_paris   75 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 3116 Apr  3 02:03 translation.json
+
+./static/locales/es-ES:
+total 4
+drwxr-xr-x 2 myassine 2022_paris   30 Apr  3 02:03 .
+drwxr-xr-x 8 myassine 2022_paris   75 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 3116 Apr  3 02:03 translation.json
+
+./static/locales/fr:
+total 4
+drwxr-xr-x 2 myassine 2022_paris   30 Apr  3 02:03 .
+drwxr-xr-x 8 myassine 2022_paris   75 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 3134 Apr  3 02:03 translation.json
+
+./static/locales/fr-FR:
+total 4
+drwxr-xr-x 2 myassine 2022_paris   30 Apr  3 02:03 .
+drwxr-xr-x 8 myassine 2022_paris   75 Apr  3 02:03 ..
+-rw-r--r-- 1 myassine 2022_paris 3134 Apr  3 02:03 translation.json
+
+./staticfiles:
+total 4
+drwxr-xr-x  2 myassine 2022_paris    6 Apr  3 02:02 .
+drwxr-xr-x 10 myassine 2022_paris 4096 Apr  3 02:45 ..
+
+./templates:
+total 24
+drwxr-xr-x  2 myassine 2022_paris   68 Apr  3 02:03 .
+drwxr-xr-x 10 myassine 2022_paris 4096 Apr  3 02:45 ..
+-rw-r--r--  1 myassine 2022_paris  297 Apr  3 02:01 add_achievement.html
+-rw-r--r--  1 myassine 2022_paris 4436 Apr  3 02:03 base.html
+-rw-r--r--  1 myassine 2022_paris 4269 Apr  3 02:01 home.html

@@ -7,6 +7,7 @@ services:
       bash -c "python manage.py migrate &&
               python manage.py collectstatic --no-input &&
               mkdir -p /code/mediafiles/users/avatars &&
+              cp -n /code/static/images/default_avatar.jpg /code/mediafiles/users/avatars/ &&
               chmod -R 777 /code/mediafiles &&
               daphne -b 0.0.0.0 -p 8000 django_project.asgi:application"
     networks:

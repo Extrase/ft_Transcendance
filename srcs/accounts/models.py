@@ -14,10 +14,9 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     profile_photo = models.ImageField(
         verbose_name='Avatar',
-        upload_to='',
+        upload_to='users/avatars/',
         blank=True,
         null=True,
-        default='users/avatars/default_avatar.jpg'
     )
     online = models.BooleanField(default=False)
     is_42_user = models.BooleanField(default=False)

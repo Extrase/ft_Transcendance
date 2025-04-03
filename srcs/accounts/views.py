@@ -26,6 +26,17 @@ from .models import Profile, Achievement, Notification, GameStatistics, PlayerSt
 
 User = get_user_model()
 
+def get_profile_photo_url(user):
+    """Fonction utilitaire pour obtenir l'URL de la photo de profil de manière sécurisée"""
+    if user.profile_photo and hasattr(user.profile_photo, 'url'):
+        try:
+            # Vérifier si le fichier existe
+            if os.path.exists(os.path.join(settings.MEDIA_ROOT, user.profile_photo.name)):
+                return user.profile_photo.url
+        except:
+            pass
+    return '/static/images/default_avatar.jpg'
+
 # ==============================
 # Vues d'authentification
 # ==============================
@@ -36,9 +47,12 @@ class SignUpView(CreateView):
     template_name = "registration/signup.html"
 
 def login_view(request):
-    if request.headers.get('HX-Request') or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return render(request, 'accounts/login.html')  # Retourne juste le contenu HTML
-    return render(request, 'base.html')  # Sinon, charge tout le template avec base.html
+    # Si la demande est une requête AJAX, renvoyer une réponse JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({"error": "Vous devez être connecté"}, status=401)
+    
+    # Sinon, rediriger vers la page d'accueil (qui affichera le formulaire de connexion)
+    return redirect('/')
 
 def login_page(request):
     form = LoginForm()
@@ -279,9 +293,15 @@ def create_user_directory(user):
 def profile_view(request):
     profile = request.user.profile
 
-    # Génération d'URL absolue pour les images
-    if request.user.profile_photo:
-        profile_photo_url = request.user.profile_photo.url
+    if request.user.profile_photo and request.user.profile_photo.name:
+        try:
+            # Vérifier si le fichier existe
+            if os.path.exists(os.path.join(settings.MEDIA_ROOT, request.user.profile_photo.name)):
+                profile_photo_url = request.user.profile_photo.url
+            else:
+                profile_photo_url = '/static/images/default_avatar.jpg'
+        except:
+            profile_photo_url = '/static/images/default_avatar.jpg'
     else:
         profile_photo_url = '/static/images/default_avatar.jpg'
 
@@ -307,8 +327,8 @@ def profile_view(request):
         "friends": [
             {
                 "username": friend.user.username,
-                "online": request.user.online,
-                "profile_photo": friend.user.profile_photo.url #if friend.user.profile_photo else '/static/images/default_avatar.jpg'#
+                "online": friend.user.online,
+                "profile_photo": friend.user.profile_photo.url if friend.user.profile_photo else '/static/images/default_avatar.jpg'
             }
             for friend in profile.friends.all()
         ],
@@ -588,7 +608,22 @@ def remove_friend(request, username):
         'message': 'Requête invalide'
     }, status=400)
 
-
+@login_required
+def friends_status(request):
+    # Pour les requêtes AJAX, renvoyer un statut 401 au lieu de rediriger
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Vous devez être connecté"}, status=401)
+    
+    profile = request.user.profile
+    friends_data = [
+        {
+            "username": friend.user.username,
+            "online": friend.user.online
+        }
+        for friend in profile.friends.all()
+    ]
+    return JsonResponse({"friends": friends_data})
 # @login_required
 # def remove_friend(request, username):
 #     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -727,7 +762,7 @@ def get_combined_profile_stats(request):
     profile_data = {
         "username": request.user.username,
         "email": request.user.email,
-        "profile_photo": request.build_absolute_uri(request.user.profile_photo.url) if request.user.profile_photo else None,
+        "profile_photo": get_profile_photo_url(request.user),
         "level": profile.level,
         "games_played": profile.games_played,
         "win_rate": profile.win_rate,
@@ -803,6 +838,11 @@ def api_home(request):
         # Récupérer le profil lié à l'utilisateur
         profile = request.user.profile
 
+        if request.user.profile_photo and hasattr(request.user.profile_photo, 'url'):
+            profile_photo_url = request.user.profile_photo.url
+        else:
+            profile_photo_url = '/static/images/default_avatar.jpg'
+
         # Construire le profil utilisateur à partir des données réelles
         user_profile = {
             "games_played": profile.games_played,
@@ -831,7 +871,7 @@ def api_home(request):
         data = {
             "is_authenticated": True,
             "username": request.user.username,
-            "profile_photo": request.user.profile_photo.url,  # Photo de profil
+            "profile_photo": profile_photo_url,  # Photo de profil
             "user_profile": user_profile,
             "featured_games": featured_games,
             "recent_activity": recent_activity
