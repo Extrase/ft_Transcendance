@@ -420,17 +420,41 @@ def update_user(request):
 def delete_user(request):
     try:
         user = request.user
+        
+        # Obtenir le profil de l'utilisateur
+        profile = user.profile
+        
+        # Supprimer cet utilisateur de la liste d'amis de tous les autres utilisateurs
+        # qui l'ont comme ami
+        profiles_with_user_as_friend = Profile.objects.filter(friends=profile)
+        for other_profile in profiles_with_user_as_friend:
+            other_profile.friends.remove(profile)
+            # Optionnel: Notifier l'autre utilisateur
+            Notification.objects.create(
+                user=other_profile.user,
+                message=f"L'utilisateur {user.username} a supprimé son compte",
+                type="info"
+            )
+        
+        # Supprimer la photo de profil si elle existe
         if user.profile_photo:
             if os.path.exists(user.profile_photo.path):
                 os.remove(user.profile_photo.path)
 
+        # Mettre l'utilisateur hors ligne avant de le supprimer
         user.online = False
         user.save()
+        
+        # Déconnecter l'utilisateur
         logout(request)
+        
+        # Supprimer le compte
         user.delete()
+        
         return JsonResponse({
             'success': True,
-            'detail': 'Compte supprimé avec succès.'
+            'detail': 'Compte supprimé avec succès.',
+            'redirect': '/'
         })
     except Exception as e:
         return JsonResponse({
@@ -610,11 +634,6 @@ def remove_friend(request, username):
 
 @login_required
 def friends_status(request):
-    # Pour les requêtes AJAX, renvoyer un statut 401 au lieu de rediriger
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        if not request.user.is_authenticated:
-            return JsonResponse({"error": "Vous devez être connecté"}, status=401)
-    
     profile = request.user.profile
     friends_data = [
         {
@@ -623,6 +642,7 @@ def friends_status(request):
         }
         for friend in profile.friends.all()
     ]
+    print(f"API friends_status appelée, {len(friends_data)} amis trouvés") # Pour déboguer
     return JsonResponse({"friends": friends_data})
 # @login_required
 # def remove_friend(request, username):

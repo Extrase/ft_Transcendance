@@ -453,35 +453,95 @@ function initFriendsStatusRefresh() {
         clearInterval(window.friendsStatusInterval);
     }
     
-    window.friendsStatusInterval = setInterval(async () => {
-        if (window.location.pathname === '/profile') {
-            try {
-                const response = await fetch('/api/friends-status/', {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    updateFriendsStatusUI(data.friends);
-                } else if (response.status === 401) {
-                    // Si l'utilisateur n'est pas authentifié, rediriger vers login
-                    window.location.href = '/login/';
-                } else {
-                    console.error('Erreur lors de la récupération des statuts:', response.status);
+    // Vérifier immédiatement au chargement de la page
+    fetchFriendsStatus();
+    
+    // Puis vérifier périodiquement
+    window.friendsStatusInterval = setInterval(fetchFriendsStatus, 5000); // Réduit à 5 secondes
+}
+
+async function fetchFriendsStatus() {
+    if (window.location.pathname === '/profile') {
+        try {
+            const response = await fetch('/api/friends-status/', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-            } catch (error) {
-                console.error('Erreur lors de l\'actualisation des statuts des amis:', error);
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                updateFriendsStatusUI(data.friends);
+            } else if (response.status === 401) {
+                window.location.href = '/login/';
+            } else {
+                console.error('Erreur lors de la récupération des statuts:', response.status);
             }
+        } catch (error) {
+            console.error('Erreur lors de l\'actualisation des statuts des amis:', error);
         }
-    }, 10000);
+    }
 }
 
 function updateFriendsStatusUI(friends) {
-    const friendCards = document.querySelectorAll('.friend-card');
+    console.log("Mise à jour de l'UI avec", friends.length, "amis");
     
+    const friendCards = document.querySelectorAll('.friend-card');
+    if (friendCards.length === 0) {
+        console.log("Aucune carte d'ami trouvée dans le DOM");
+        return;
+    }
+    
+    // Récupérer tous les noms d'utilisateurs actuellement affichés
+    const displayedUsernames = Array.from(friendCards).map(card => 
+        card.querySelector('.friend-name')?.textContent
+    ).filter(Boolean); // Filtre les valeurs null/undefined
+    
+    console.log("Usernames affichés:", displayedUsernames);
+    
+    // Récupérer tous les noms d'utilisateurs reçus du serveur
+    const serverUsernames = friends.map(f => f.username);
+    console.log("Usernames du serveur:", serverUsernames);
+    
+    // Identifier les utilisateurs qui ont été supprimés
+    const deletedUsernames = displayedUsernames.filter(username => 
+        !serverUsernames.includes(username)
+    );
+    console.log("Usernames supprimés:", deletedUsernames);
+    
+    // Si des amis ont été supprimés, mettre à jour l'interface
+    if (deletedUsernames.length > 0) {
+        deletedUsernames.forEach(username => {
+            console.log(`Suppression de la carte pour ${username}`);
+            const cardToRemove = Array.from(friendCards).find(card => 
+                card.querySelector('.friend-name')?.textContent === username
+            );
+            
+            if (cardToRemove) {
+                // Ajouter cette animation de suppression
+                cardToRemove.style.opacity = "0";
+                cardToRemove.style.transform = "translateX(-20px)";
+                cardToRemove.classList.add('fade-out');
+                cardToRemove.classList.add('fade-out');
+                setTimeout(() => {
+                    cardToRemove.remove();
+                    
+                    const countEl = document.querySelector('.friends-section h3 .stat-value');
+                    if (countEl) {
+                        const currentCount = parseInt(countEl.textContent);
+                        countEl.textContent = currentCount - 1;
+                    }
+
+                    showDeletedFriendNotification(username);
+                }, 500);
+            } else {
+                console.log(`Carte non trouvée pour ${username}`);
+            }
+        });
+    }
+    
+    // Mise à jour des statuts des amis restants (code existant)
     friendCards.forEach(card => {
         const nameElement = card.querySelector('.friend-name');
         const statusElement = card.querySelector('.friend-status');
@@ -511,10 +571,44 @@ function updateFriendsStatusUI(friends) {
     });
 }
 
+// Ajouter cette fonction pour afficher une notification
+function showDeletedFriendNotification(username) {
+    console.log(`Notification: ${username} a supprimé son compte`); // Pour déboguer
+    
+    // Créer une notification fixe en haut de l'écran
+    const notification = document.createElement('div');
+    notification.className = 'deleted-friend-notification';
+    notification.textContent = `${username} a supprimé son compte`;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    notification.style.color = 'white';
+    notification.style.padding = '10px 15px';
+    notification.style.borderRadius = '4px';
+    notification.style.zIndex = '1000';
+    notification.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+    
+    // Ajouter la notification au body pour s'assurer qu'elle est visible
+    document.body.appendChild(notification);
+    
+    // Supprimer après 3 secondes avec une animation
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.5s, transform 0.5s';
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(20px)';
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 3000);
+}
+
 function cleanupProfilePage() {
     if (window.friendsStatusInterval) {
         clearInterval(window.friendsStatusInterval);
         window.friendsStatusInterval = null;
+        console.log('Polling des amis arrêté');
     }
 }
 
@@ -1005,7 +1099,7 @@ async function handleDeleteUser(event) {
 
         if (response.ok) {
             alert('Compte supprimé avec succès !');
-            window.location.href = '/login';  // Redirection directe
+            window.location.href = '/'; 
         } else {
             const errorData = await response.json();
             document.getElementById('error-messages').style.display = 'block';
