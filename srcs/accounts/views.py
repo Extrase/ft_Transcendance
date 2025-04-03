@@ -168,12 +168,21 @@ def callback_view(request):
         state = request.GET.get('state')
         stored_state = request.session.get('oauth_state')
         if not state or state != stored_state:
-            return JsonResponse({'success': False, 'error': 'Invalid state parameter'})
+            # Gérer différemment selon le type de requête
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Invalid state parameter'})
+            else:
+                messages.error(request, 'Erreur d\'authentification: état invalide')
+                return redirect('/')
 
         # Récupérer le code d'autorisation
         code = request.GET.get('code')
         if not code:
-            return JsonResponse({'success': False, 'error': 'No code provided'})
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'No code provided'})
+            else:
+                messages.error(request, 'Erreur d\'authentification: code manquant')
+                return redirect('/')
 
         # Échanger le code contre un token d'accès
         token_response = requests.post(settings.TOKEN_URL, data={
@@ -265,12 +274,23 @@ def callback_view(request):
         user.save()
         user_directory = os.path.join(settings.MEDIA_ROOT, 'users', user.username)
         os.makedirs(user_directory, exist_ok=True)
-        return HttpResponseRedirect(f"{settings.FRONTEND_URL}/")
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True, 
+                'is_authenticated': True, 
+                'username': user.username
+            })
+        else:
+            # Pour les requêtes normales, redirection vers le profil
+            return redirect('/profile')
 
     except Exception as e:
         print(f"Erreur dans callback_view: {str(e)}")
-        return JsonResponse({'success': False, 'error': f'Authentication failed: {str(e)}'})
-
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': f'Authentication failed: {str(e)}'})
+        else:
+            messages.error(request, f'Erreur d\'authentification: {str(e)}')
+            return redirect('/')
 # ==============================
 # Profil utilisateur
 # ==============================

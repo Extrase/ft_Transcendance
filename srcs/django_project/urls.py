@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.generic.base import TemplateView, RedirectView
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -12,6 +13,15 @@ import accounts.views
 
 def spa_fallback(request, path=None):
     """Gère toutes les routes SPA non définies explicitement"""
+    
+    # Cas spécial: route callback avec code OAuth
+    if path == 'callback' and request.GET.get('code'):
+        print("Redirection du callback 42 depuis le SPA fallback")
+        # Ne pas renvoyer la vue callback directement, mais rediriger vers /callback/
+        # car la vue callback a besoin de tous les paramètres d'URL
+        return HttpResponseRedirect(f'/callback/?{request.GET.urlencode()}')
+        
+    # Pour toutes les autres routes, renvoyer l'application SPA
     return render(request, 'base.html')
 
 urlpatterns = [

@@ -113,8 +113,16 @@ function setupLanguageSelector() {
 
 function normalizePath(path) {
     if (path === '/') return '/';
-    return path.endsWith('/') ? path.slice(0, -1) : path;
-  }
+    
+    // Enlever les paramètres d'URL (tout ce qui suit ?)
+    let cleanPath = path;
+    if (cleanPath.includes('?')) {
+        cleanPath = cleanPath.split('?')[0];
+    }
+    
+    // Enlever les slashs de fin
+    return cleanPath.endsWith('/') ? cleanPath.slice(0, -1) : cleanPath;
+}
 
 function checkAvatar(input) {
     const file = input.files[0];
@@ -1619,6 +1627,47 @@ router.on('/password-change-success', loadPasswordChangeSuccessPage);
 router.on('/auth/delete_user', loadDeleteUserPage);
 router.on('/auth/update_user', loadUpdateUserPage);
 router.on('/chat', loadChatPage);
+router.on('/callback', async () => {
+    // Récupérer les paramètres d'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    
+    console.log("Traitement du callback OAuth, code:", code ? "présent" : "absent");
+    
+    if (!code) {
+        console.warn("Callback sans code OAuth, redirection vers l'accueil");
+        router.navigate('/');
+        return;
+    }
+    
+    try {
+        console.log("Vérification de l'authentification...");
+        // Faire une requête directe au callback au lieu de vérifier l'authentification
+        const response = await fetch(`/callback/?code=${code}&state=${state}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.is_authenticated) {
+            console.log("Authentification OAuth réussie, redirection vers le profil");
+            
+            // Mettre à jour la navbar puis naviguer
+            await updateNavbar();
+            router.navigate('/profile');
+        } else {
+            console.error("Erreur d'authentification:", data.error);
+            router.navigate('/');
+        }
+    } catch (error) {
+        console.error("Erreur lors de la vérification d'authentification:", error);
+        router.navigate('/');
+    }
+});
 router.on('/friend-profile/:username', (params) => {
     const username = params.username;
     loadFriendProfilePage(username);
