@@ -35,6 +35,7 @@ urlpatterns = [
     path('add-friend/<str:username>/', accounts.views.add_friend, name='add_friend'),
     path('remove_friend/<str:username>', accounts.views.remove_friend, name='remove_friend'),
     path('api/friends-status/', accounts.views.friends_status, name='friends_status'),
+    path('api/check-new-friends/', accounts.views.check_new_friends, name='check_new_friends'),
 
     # Routes Pong
     path('pong/', accounts.views.index, name='pong_index'),  # Page principale du jeu Pong

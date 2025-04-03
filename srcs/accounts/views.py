@@ -564,15 +564,32 @@ def add_friend(request, username):
             }, status=400)
 
         try:
+            # Récupérer l'utilisateur à ajouter comme ami
             friend_user = User.objects.get(username=username)
             friend_profile = Profile.objects.get(user=friend_user)
+            
+            # Récupérer le profil de l'utilisateur actuel
             current_user_profile = Profile.objects.get(user=request.user)
 
+            # Vérifier si l'ami est déjà dans la liste d'amis
             if friend_profile not in current_user_profile.friends.all():
+                # Ajout bidirectionnel: 
+                # 1. Ajouter l'ami au profil de l'utilisateur actuel
                 current_user_profile.friends.add(friend_profile)
+                
+                # 2. Ajouter également l'utilisateur actuel à la liste d'amis de l'ami
+                friend_profile.friends.add(current_user_profile)
+                
+                # 3. Créer une notification pour l'ami
+                Notification.objects.create(
+                    user=friend_user,
+                    message=f"{request.user.username} vous a ajouté comme ami",
+                    type="info"
+                )
+                
                 return JsonResponse({
                     'status': 'success',
-                    'message': f'{username} a été ajouté à vos amis'
+                    'message': f'{username} a été ajouté à vos amis (et vous avez été ajouté à ses amis)'
                 })
             else:
                 return JsonResponse({
@@ -605,10 +622,23 @@ def remove_friend(request, username):
             current_user_profile = Profile.objects.get(user=request.user)
 
             if friend_profile in current_user_profile.friends.all():
+                # Suppression bidirectionnelle:
+                # 1. Supprimer l'ami de la liste d'amis de l'utilisateur actuel
                 current_user_profile.friends.remove(friend_profile)
+                
+                # 2. Supprimer également l'utilisateur actuel de la liste d'amis de l'ami
+                friend_profile.friends.remove(current_user_profile)
+                
+                # 3. Créer une notification pour l'ami
+                Notification.objects.create(
+                    user=friend_user,
+                    message=f"{request.user.username} vous a retiré de ses amis",
+                    type="info"
+                )
+                
                 return JsonResponse({
                     'status': 'success',
-                    'message': f'{username} a été retiré de vos amis'
+                    'message': f'{username} a été retiré de vos amis (et vous avez été retiré de ses amis)'
                 })
             else:
                 return JsonResponse({
@@ -644,6 +674,43 @@ def friends_status(request):
     ]
     print(f"API friends_status appelée, {len(friends_data)} amis trouvés") # Pour déboguer
     return JsonResponse({"friends": friends_data})
+
+@login_required
+def check_new_friends(request):
+    """Vérifie si de nouveaux amis ont été ajoutés depuis la dernière requête"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            known_friends = data.get('known_friends', [])
+            
+            # Récupérer la liste actuelle d'amis
+            profile = request.user.profile
+            current_friends = [
+                {
+                    "username": friend.user.username,
+                    "online": friend.user.online,
+                    "profile_photo": get_profile_photo_url(friend.user)
+                }
+                for friend in profile.friends.all()
+            ]
+            
+            # Identifier les nouveaux amis
+            current_usernames = [friend["username"] for friend in current_friends]
+            new_friends = [
+                friend for friend in current_friends
+                if friend["username"] not in known_friends
+            ]
+            
+            return JsonResponse({
+                "current_friends": current_usernames,
+                "new_friends": new_friends
+            })
+            
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+
 # @login_required
 # def remove_friend(request, username):
 #     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':

@@ -435,7 +435,15 @@ async function loadProfilePage() {
         initAddFriendForm();
         initRemoveFriendForms();
         updateTranslations();
-        initFriendsStatusRefresh();
+        
+        if (window.friendsStatusInterval) {
+            clearInterval(window.friendsStatusInterval);
+            window.friendsStatusInterval = null;
+        }
+        
+        // Initialiser le polling immédiatement avec un petit délai pour laisser le DOM se mettre à jour
+        setTimeout(initFriendsStatusRefresh, 100);
+
     } catch (error) {
         console.error('Erreur lors du chargement du profil:', error);
         document.querySelector('#app').innerHTML = `
@@ -446,41 +454,198 @@ async function loadProfilePage() {
     }
 }
 
-
-
 function initFriendsStatusRefresh() {
+    console.log("Initialisation du polling des amis");
+    
     if (window.friendsStatusInterval) {
         clearInterval(window.friendsStatusInterval);
+        window.friendsStatusInterval = null;
     }
     
     // Vérifier immédiatement au chargement de la page
     fetchFriendsStatus();
     
     // Puis vérifier périodiquement
-    window.friendsStatusInterval = setInterval(fetchFriendsStatus, 5000); // Réduit à 5 secondes
+    window.friendsStatusInterval = setInterval(fetchFriendsStatus, 3000); // Réduit à 3 secondes pour une meilleure réactivité
+}
+
+function addNewFriendsToUI(newFriends) {
+    console.log("Ajout de nouveaux amis:", newFriends);
+    
+    const friendsGrid = document.querySelector('.friends-grid');
+    if (!friendsGrid) {
+        console.error("Impossible de trouver la grille d'amis");
+        return;
+    }
+    
+    // Mettre à jour le compteur d'amis
+    const countEl = document.querySelector('.friends-section h3 .stat-value');
+    if (countEl) {
+        const currentCount = parseInt(countEl.textContent);
+        countEl.textContent = currentCount + newFriends.length;
+    }
+    
+    // Ajouter chaque nouvel ami avec une animation
+    newFriends.forEach(friend => {
+        const friendCard = document.createElement('div');
+        friendCard.className = 'friend-card';
+        friendCard.style.opacity = '0';
+        friendCard.style.transform = 'translateY(20px)';
+        
+        friendCard.innerHTML = `
+            <div class="friend-avatar">
+                <img src="${friend.profile_photo || '/static/images/default_avatar.jpg'}" 
+                     alt="${friend.username}"
+                     onerror="this.src='/static/images/default_avatar.jpg'">
+            </div>
+            <div class="friend-info">
+                <span class="friend-name">${friend.username}</span>
+                <span class="friend-status ${friend.online ? 'online' : 'offline'}">
+                    ${friend.online ? 'Online' : 'Offline'}
+                </span>
+                <form id="removeFriendForm" class="remove-friend-form" data-username="${friend.username}">
+                    <button class="remove-friend-btn" type="submit">Supprimer</button>
+                </form>
+                <div id="removeFriendStatus-${friend.username}" class="friend-form-message"></div>
+            </div>
+        `;
+        
+        friendsGrid.appendChild(friendCard);
+        
+        // Ajouter un écouteur d'événement pour le bouton de suppression
+        const form = friendCard.querySelector('.remove-friend-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = form.dataset.username;
+            const statusDiv = friendCard.querySelector('.friend-form-message');
+            
+            try {
+                const response = await fetch(`/remove_friend/${encodeURIComponent(username)}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    friendCard.classList.add('fade-out');
+                    setTimeout(() => {
+                        friendCard.remove();
+                        
+                        // Mettre à jour le compteur
+                        const countEl = document.querySelector('.friends-section h3 .stat-value');
+                        if (countEl) {
+                            const count = parseInt(countEl.textContent);
+                            countEl.textContent = count - 1;
+                        }
+                    }, 500);
+                }
+                
+                statusDiv.textContent = data.message;
+                statusDiv.className = `friend-form-message ${data.status}`;
+                
+            } catch (error) {
+                console.error("Erreur lors de la suppression:", error);
+                statusDiv.textContent = "Une erreur s'est produite";
+                statusDiv.className = 'friend-form-message error';
+            }
+        });
+        
+        // Animer l'apparition
+        setTimeout(() => {
+            friendCard.style.transition = 'opacity 0.5s, transform 0.5s';
+            friendCard.style.opacity = '1';
+            friendCard.style.transform = 'translateY(0)';
+            
+            // Afficher une notification
+            showNewFriendNotification(friend.username);
+        }, 100);
+    });
+}
+
+// Fonction pour afficher une notification d'ajout d'ami
+function showNewFriendNotification(username) {
+    const notification = document.createElement('div');
+    notification.className = 'new-friend-notification';
+    notification.textContent = `${username} vous a ajouté comme ami`;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = 'rgba(46, 125, 50, 0.9)';
+    notification.style.color = 'white';
+    notification.style.padding = '10px 15px';
+    notification.style.borderRadius = '4px';
+    notification.style.zIndex = '1000';
+    notification.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.5s, transform 0.5s';
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(20px)';
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    }, 3000);
 }
 
 async function fetchFriendsStatus() {
+    // Vérifier qu'on est bien sur la page de profil
     if (window.location.pathname === '/profile') {
         try {
-            const response = await fetch('/api/friends-status/', {
+            // 1. Vérifier d'abord les statuts des amis existants
+            const statusResponse = await fetch('/api/friends-status/', {
                 headers: {
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Cache-Control': 'no-cache'
                 }
             });
             
-            if (response.ok) {
-                const data = await response.json();
-                updateFriendsStatusUI(data.friends);
-            } else if (response.status === 401) {
+            if (statusResponse.ok) {
+                const statusData = await statusResponse.json();
+                console.log("Données d'amis reçues:", statusData);
+                updateFriendsStatusUI(statusData.friends);
+                
+                // 2. Ensuite, vérifier s'il y a de nouveaux amis
+                const friendCards = document.querySelectorAll('.friend-card');
+                const knownFriends = Array.from(friendCards).map(card => 
+                    card.querySelector('.friend-name')?.textContent
+                ).filter(Boolean);
+                
+                const checkNewResponse = await fetch('/api/check-new-friends/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ known_friends: knownFriends })
+                });
+                
+                if (checkNewResponse.ok) {
+                    const newFriendsData = await checkNewResponse.json();
+                    if (newFriendsData.new_friends && newFriendsData.new_friends.length > 0) {
+                        addNewFriendsToUI(newFriendsData.new_friends);
+                    }
+                }
+            } else if (statusResponse.status === 401) {
+                console.log("Non authentifié, redirection vers login");
                 window.location.href = '/login/';
             } else {
-                console.error('Erreur lors de la récupération des statuts:', response.status);
+                console.error('Erreur lors de la récupération des statuts:', statusResponse.status);
             }
         } catch (error) {
             console.error('Erreur lors de l\'actualisation des statuts des amis:', error);
         }
+    } else {
+        console.log("N'est pas sur la page de profil, le polling est ignoré");
     }
 }
 
@@ -519,11 +684,10 @@ function updateFriendsStatusUI(friends) {
             );
             
             if (cardToRemove) {
-                // Ajouter cette animation de suppression
+                // Corriger la duplication et appliquer l'animation une seule fois
                 cardToRemove.style.opacity = "0";
                 cardToRemove.style.transform = "translateX(-20px)";
-                cardToRemove.classList.add('fade-out');
-                cardToRemove.classList.add('fade-out');
+                cardToRemove.classList.add('fade-out'); // Une seule fois ici
                 setTimeout(() => {
                     cardToRemove.remove();
                     
