@@ -454,6 +454,141 @@ async function loadProfilePage() {
     }
 }
 
+async function loadFriendProfilePage(username) {
+    bombover = true;
+    pongadvover = true;
+    pongover = true;
+    try {
+        // Vérifier d'abord si l'utilisateur est authentifié
+        const authCheck = await fetch('/api/check-auth/');
+        const authData = await authCheck.json();
+        
+        if (!authData.is_authenticated) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        // Récupérer les données du profil de l'ami
+        const response = await fetch(`/api/friend-profile/${encodeURIComponent(username)}/`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            document.querySelector('#app').innerHTML = `
+                <div class="alert alert-danger">
+                    <h3>Erreur</h3>
+                    <p>${errorData.error || 'Impossible de charger le profil de cet ami'}</p>
+                    <a href="/profile" class="btn btn-primary" data-link>Retour à mon profil</a>
+                </div>
+            `;
+            return;
+        }
+        
+        const data = await response.json();
+        
+        // Générer le contenu HTML pour le profil de l'ami
+        document.querySelector('#app').innerHTML = generateFriendProfileContent(data);
+        updateTranslations();
+        
+    } catch (error) {
+        console.error('Erreur lors du chargement du profil ami:', error);
+        document.querySelector('#app').innerHTML = `
+            <div class="alert alert-danger">
+                <h3>Erreur</h3>
+                <p>${error.message}</p>
+                <a href="/profile" class="btn btn-primary" data-link>Retour à mon profil</a>
+            </div>
+        `;
+    }
+}
+
+// Fonction pour générer le HTML du profil ami
+function generateFriendProfileContent(data) {
+    const profilePhotoUrl = (data.profile_photo && !data.profile_photo.includes('default_avatar.jpg')) ? 
+        data.profile_photo.replace('http://localhost/', 'https://localhost:8443/') : 
+        '/static/images/default_avatar.jpg';
+    
+    return `
+    <div class="container mt-5">
+        <div class="profile-background">
+            <div class="back-button">
+                <a href="/profile" class="btn btn-primary" data-link>
+                    <i class="fas fa-arrow-left"></i> Retour à mon profil
+                </a>
+            </div>
+
+            <!-- Profile Header Section -->
+            <div class="profile-header" style="background: linear-gradient(to right, ${data.profile_gradient_start}, ${data.profile_gradient_end});">
+                <div class="profile-summary">
+                    <div class="avatar-section">
+                        <img src="${profilePhotoUrl}" 
+                            alt="Avatar" 
+                            class="profile-avatar"
+                            onerror="this.src='/static/images/default_avatar.jpg'">
+                    </div>
+                    <div class="profile-details">
+                        <h1>${data.username}</h1>
+                        <div class="player-level">
+                            <span class="level-icon">${data.level}</span>
+                            <div class="level-progress">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: ${data.win_rate}%">${data.win_rate}%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="online-status ${data.online ? 'online' : 'offline'}">
+                            ${data.online ? 'En ligne' : 'Hors ligne'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="profile-content">
+                <!-- Sidebar Section -->
+                <div class="sidebar">
+                    <div class="profile-card">
+                        <div class="recent-activity">
+                            <h3 data-i18n="profile.recent_activity">Activité récente</h3>
+                            <p><span data-i18n="profile.last_played">Dernier jeu</span>: <span class="data">${data.last_played_game || 'N/A'}</span></p>
+                            <p><span data-i18n="profile.time_played">Temps de jeu</span>: <span class="data">
+                            ${data.time_played >= 60 
+                            ? `${Math.floor(data.time_played / 60)}h ${Math.floor(data.time_played % 60)}min` 
+                            : `${Math.floor(data.time_played)} min`}
+                            </span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Section -->
+                <div class="main-content">
+                    <div class="stats-showcase">
+                        <div class="stat-card"><h4 data-i18n="profile.games_played">Parties jouées</h4><span class="stat-value">${data.games_played}</span></div>
+                        <div class="stat-card"><h4 data-i18n="profile.win_rate">Taux de victoire</h4><span class="stat-value">${data.win_rate}%</span></div>
+                        <div class="stat-card"><h4 data-i18n="profile.total_score">Score total</h4><span class="stat-value">${data.total_score}</span></div>
+                    </div>
+
+                    <div class="achievements">
+                        <h3><span data-i18n="profile.recent_achievements">Succès récents</span> (<span class="stat-value">${data.achievements.length}</span>)</h3>
+                        <div class="achievement-grid">
+                            ${data.achievements.map(ach => `
+                                <div class="achievement">
+                                    <i class="${ach.icon}"></i>
+                                    <span>${ach.name}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
 function initFriendsStatusRefresh() {
     console.log("Initialisation du polling des amis");
     
@@ -503,14 +638,30 @@ function addNewFriendsToUI(newFriends) {
                 <span class="friend-status ${friend.online ? 'online' : 'offline'}">
                     ${friend.online ? 'Online' : 'Offline'}
                 </span>
-                <form id="removeFriendForm" class="remove-friend-form" data-username="${friend.username}">
-                    <button class="remove-friend-btn" type="submit">Supprimer</button>
-                </form>
+                <div class="friend-buttons">
+                    <button class="view-profile-btn" data-username="${friend.username}">
+                        <i class="fas fa-user"></i> Voir profil
+                    </button>
+                    <form class="remove-friend-form" data-username="${friend.username}">
+                        <button class="remove-friend-btn" type="submit">Supprimer</button>
+                    </form>
+                </div>
                 <div id="removeFriendStatus-${friend.username}" class="friend-form-message"></div>
             </div>
         `;
         
         friendsGrid.appendChild(friendCard);
+        
+        // Ajouter un écouteur d'événement pour le bouton "Voir profil"
+        const viewProfileBtn = friendCard.querySelector('.view-profile-btn');
+        if (viewProfileBtn) {
+            viewProfileBtn.addEventListener('click', () => {
+                const username = viewProfileBtn.dataset.username;
+                console.log(`Affichage du profil de ${username}`);
+                history.pushState({}, '', `/friend-profile/${username}`);
+                loadFriendProfilePage(username);
+            });
+        }
         
         // Ajouter un écouteur d'événement pour le bouton de suppression
         const form = friendCard.querySelector('.remove-friend-form');
@@ -1413,6 +1564,10 @@ router.on('/password-change-success', loadPasswordChangeSuccessPage);
 router.on('/auth/delete_user', loadDeleteUserPage);
 router.on('/auth/update_user', loadUpdateUserPage);
 router.on('/chat', loadChatPage);
+router.on('/friend-profile/:username', (params) => {
+    const username = params.username;
+    loadFriendProfilePage(username);
+});
 router.on('/pong', async () => {
     try {
         bombover = true;
@@ -1778,23 +1933,14 @@ function initAddFriendForm() {
 }
 
 function initRemoveFriendForms() {
+    // Gérer les formulaires de suppression d'amis
     const forms = document.querySelectorAll('.remove-friend-form');
-
     forms.forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const username = form.dataset.username;
-            let statusDiv = document.getElementById(`removeFriendStatus-${username}`);
-
-            // Créer le statusDiv s'il n'existe pas
-            if (!statusDiv) {
-                statusDiv = document.createElement('div');
-                statusDiv.id = `removeFriendStatus-${username}`;
-                statusDiv.className = 'friend-form-message';
-                form.insertAdjacentElement('afterend', statusDiv);
-            }
-
+            const statusDiv = document.getElementById(`removeFriendStatus-${username}`);
+            
             try {
                 const response = await fetch(`/remove_friend/${encodeURIComponent(username)}`, {
                     method: 'POST',
@@ -1804,43 +1950,59 @@ function initRemoveFriendForms() {
                         'Content-Type': 'application/json'
                     }
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
+                
                 const data = await response.json();
-                console.log("Réponse reçue:", data);
-
+                
                 if (data.status === 'success') {
-                    const friendElement = form.closest('.friend-card');
-                    if (friendElement) {
-                        friendElement.classList.add('fade-out');
-                        setTimeout(() => {
-                            friendElement.remove();
-                            // Vérifier si la liste est vide
-                            const friendsList = document.querySelector('.friends-list');
-                            if (friendsList && friendsList.children.length === 0) {
-                                friendsList.innerHTML = '<p>Pas encore d\'amis.</p>';
-                            }
-                        }, 300);
-                        router.navigate('/profile');
-                    }
+                    const friendCard = form.closest('.friend-card');
+                    friendCard.classList.add('fade-out');
+                    setTimeout(() => {
+                        friendCard.remove();
+                        
+                        const countEl = document.querySelector('.friends-section h3 .stat-value');
+                        if (countEl) {
+                            const count = parseInt(countEl.textContent);
+                            countEl.textContent = count - 1;
+                        }
+                    }, 500);
                 }
-
+                
                 statusDiv.textContent = data.message;
                 statusDiv.className = `friend-form-message ${data.status}`;
-
+                
             } catch (error) {
-                console.error("Erreur détaillée:", error);
-                statusDiv.textContent = "Une erreur s'est produite lors de la suppression";
+                console.error("Erreur lors de la suppression:", error);
+                statusDiv.textContent = "Une erreur s'est produite";
                 statusDiv.className = 'friend-form-message error';
             }
+        });
+    });
+    
+    // Gérer les boutons "Voir profil"
+    const viewProfileButtons = document.querySelectorAll('.view-profile-btn');
+    console.log("Initialisation de", viewProfileButtons.length, "boutons de profil");
+
+    viewProfileButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const username = button.dataset.username;
+
+            console.log("Clic sur le bouton Voir profil pour", username);
+            // Sauvegarder l'état actuel pour l'historique
+            history.pushState({}, '', `/friend-profile/${username}`);
+            // Charger le profil de l'ami
+            loadFriendProfilePage(username);
         });
     });
 }
 
 function generateFriendsList(friends) {
+    if (friends.length === 0) {
+        return `<div class="empty-state">
+            <i class="fas fa-user-friends"></i>
+            <p>Vous n'avez pas encore d'amis.</p>
+        </div>`;
+    }
+
     return friends.map(friend => `
         <div class="friend-card">
             <div class="friend-avatar">
@@ -1853,11 +2015,16 @@ function generateFriendsList(friends) {
                 <span class="friend-status ${friend.online ? 'online' : 'offline'}">
                     ${friend.online ? 'Online' : 'Offline'}
                 </span>
-                <form id="removeFriendForm" class="remove-friend-form" data-username="${friend.username}">
-                    <button class="remove-friend-btn" type="submit">Supprimer</button>
-                </form>
+                <div class="friend-buttons">
+                    <button class="view-profile-btn" data-username="${friend.username}">
+                        <i class="fas fa-user"></i> Voir profil
+                    </button>
+                    <form class="remove-friend-form" data-username="${friend.username}">
+                        <button class="remove-friend-btn" type="submit">Supprimer</button>
+                    </form>
+                </div>
                 <div id="removeFriendStatus-${friend.username}" class="friend-form-message"></div>
             </div>
         </div>
-    `).join('')
+    `).join('');
 }

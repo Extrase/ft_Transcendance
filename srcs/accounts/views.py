@@ -345,6 +345,52 @@ def profile_view(request):
     return JsonResponse(profile_data)
 
 @login_required
+def friend_profile_view(request, username):
+    """Vue pour afficher le profil d'un ami"""
+    try:
+        friend_user = User.objects.get(username=username)
+        friend_profile = Profile.objects.get(user=friend_user)
+        
+        # Vérifier si cet utilisateur est un ami
+        if friend_profile not in request.user.profile.friends.all():
+            return JsonResponse({
+                'error': 'Vous n\'êtes pas autorisé à voir ce profil'
+            }, status=403)
+        
+        # Préparer les données du profil de l'ami
+        if friend_user.profile_photo and hasattr(friend_user.profile_photo, 'url'):
+            profile_photo_url = get_profile_photo_url(friend_user)
+        else:
+            profile_photo_url = '/static/images/default_avatar.jpg'
+        
+        profile_data = {
+            "username": friend_user.username,
+            "email": friend_user.email,
+            "profile_photo": profile_photo_url,
+            "level": friend_profile.level,
+            "games_played": friend_profile.games_played,
+            "win_rate": friend_profile.win_rate,
+            "total_score": friend_profile.total_score,
+            "last_played_game": friend_profile.last_played_game,
+            "time_played": friend_profile.time_played,
+            "is_42_user": friend_user.is_42_user,
+            "online": friend_user.online,
+            "profile_gradient_start": friend_profile.profile_gradient_start,
+            "profile_gradient_end": friend_profile.profile_gradient_end,
+            "achievements": [
+                {"name": achievement.name, "icon": achievement.icon}
+                for achievement in friend_profile.achievements.all()
+            ]
+        }
+        
+        return JsonResponse(profile_data)
+    
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Utilisateur non trouvé'}, status=404)
+    except Profile.DoesNotExist:
+        return JsonResponse({'error': 'Profil non trouvé'}, status=404)
+
+@login_required
 def get_user_data(request):
     user = request.user
     data = {

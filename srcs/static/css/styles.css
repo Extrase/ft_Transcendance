@@ -1036,8 +1036,9 @@ body::after {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .friend-card:hover {
@@ -1066,16 +1067,21 @@ body::after {
 }
 
 .remove-friend-btn {
-    background: none;
+    background-color: var(--danger-color);
+    color: white;
     border: none;
-    color: var(--remove-friend-color);
+    padding: 6px 12px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: color 0.3s ease;
-    padding: 5px;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
 }
 
 .remove-friend-btn:hover {
-    color: var(--remove-friend-hover-color);
+    background-color: var(--danger-hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(231, 76, 60, 0.3);
 }
 
 .empty-state {
@@ -1918,6 +1924,8 @@ canvas {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    width: 100%;
+    padding: 0 5px;
 }
 
 .friend-name {
@@ -2183,4 +2191,84 @@ canvas {
     .language-option {
         padding: 8px;
     }
+}
+
+.back-button {
+    margin: 20px 0;
+    text-align: left;
+    width: 100%;
+}
+
+.back-button a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--button-bg);
+    color: var(--primary-text);
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+}
+
+.back-button a:hover {
+    background: var(--highlight-color);
+    transform: translateX(-5px);
+}
+
+.online-status {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.online-status.online {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
+}
+
+.online-status.offline {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.view-profile-btn {
+    background: var(--friend-action-bg);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(102, 192, 244, 0.2);
+}
+
+.view-profile-btn i {
+    font-size: 0.9em;
+}
+
+.view-profile-btn:hover {
+    transform: translateY(-2px);
+    background: var(--friend-action-hover-bg);
+    box-shadow: 0 6px 12px rgba(102, 192, 244, 0.3);
+}
+
+.friend-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    width: 100%;
+    justify-content: center;
 }
