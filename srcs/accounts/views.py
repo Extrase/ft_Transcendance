@@ -41,6 +41,10 @@ def get_profile_photo_url(user):
 # Vues d'authentification
 # ==============================
 
+@login_required
+def get_user_id(request):
+    return JsonResponse({'user_id': request.user.id})
+
 class SignUpView(CreateView):
     form_class = UserCreationForm
     success_url = reverse_lazy("login")
