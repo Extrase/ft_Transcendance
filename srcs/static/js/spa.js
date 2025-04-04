@@ -785,7 +785,6 @@ function addNewFriendsToUI(newFriends) {
 function showNewFriendNotification(username) {
     const notification = document.createElement('div');
     notification.className = 'new-friend-notification';
-    notification.textContent = `${username} vous a ajouté comme ami`;
     notification.style.position = 'fixed';
     notification.style.top = '20px';
     notification.style.right = '20px';
@@ -795,18 +794,63 @@ function showNewFriendNotification(username) {
     notification.style.borderRadius = '4px';
     notification.style.zIndex = '1000';
     notification.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+    notification.style.display = 'flex';
+    notification.style.justifyContent = 'space-between';
+    notification.style.alignItems = 'center';
+    notification.style.minWidth = '250px';
     
-    document.body.appendChild(notification);
+    // Message container
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = `${username} vous a ajouté comme ami`;
     
-    setTimeout(() => {
-        notification.style.transition = 'opacity 0.5s, transform 0.5s';
+    // Close button avec style amélioré
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'X'; // Utiliser 'X' au lieu de &times;
+    closeButton.style.background = 'rgba(255, 255, 255, 0.3)';
+    closeButton.style.border = 'none';
+    closeButton.style.borderRadius = '50%';
+    closeButton.style.color = 'white';
+    closeButton.style.fontSize = '16px';
+    closeButton.style.fontWeight = 'bold';
+    closeButton.style.marginLeft = '15px';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.width = '24px';
+    closeButton.style.height = '24px';
+    closeButton.style.display = 'flex';
+    closeButton.style.justifyContent = 'center';
+    closeButton.style.alignItems = 'center';
+    closeButton.style.padding = '0';
+    closeButton.style.lineHeight = '1';
+    closeButton.title = 'Fermer';
+    
+    closeButton.addEventListener('click', () => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateX(20px)';
         
         setTimeout(() => {
             notification.remove();
-        }, 500);
-    }, 3000);
+        }, 300);
+    });
+    
+    notification.appendChild(messageSpan);
+    notification.appendChild(closeButton);
+    
+    document.body.appendChild(notification);
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            notification.style.transition = 'opacity 0.5s, transform 0.5s';
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(20px)';
+            
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.remove();
+                }
+            }, 500);
+        }
+    }, 5000);
 }
 
 async function fetchFriendsStatus() {
@@ -877,11 +921,11 @@ function updateFriendsStatusUI(friends) {
         card.querySelector('.friend-name')?.textContent
     ).filter(Boolean); // Filtre les valeurs null/undefined
     
-    console.log("Usernames affichés:", displayedUsernames);
+    console.log("Usernames affichés 123:", displayedUsernames);
     
     // Récupérer tous les noms d'utilisateurs reçus du serveur
     const serverUsernames = friends.map(f => f.username);
-    console.log("Usernames du serveur:", serverUsernames);
+    console.log("Usernames du serveur 321:", serverUsernames);
     
     // Identifier les utilisateurs qui ont été supprimés
     const deletedUsernames = displayedUsernames.filter(username => 
@@ -2018,8 +2062,30 @@ function initAddFriendForm() {
                 const data = await response.json();
 
                 // Afficher le message de statut
-                statusDiv.textContent = data.message;
+                statusDiv.innerHTML = '';
+                const messageText = document.createElement('span');
+                messageText.textContent = data.message;
+
+                statusDiv.appendChild(messageText);
                 statusDiv.className = `friend-form-message ${data.status}`;
+                statusDiv.style.display = 'flex';
+                statusDiv.style.justifyContent = 'space-between';
+                statusDiv.style.alignItems = 'center';
+
+                // AJOUTEZ CECI : Auto-close après 3.5 secondes
+                setTimeout(() => {
+                    if (document.body.contains(statusDiv)) {
+                        statusDiv.style.transition = 'opacity 0.5s';
+                        statusDiv.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            if (document.body.contains(statusDiv)) {
+                                statusDiv.style.display = 'none';
+                                statusDiv.style.opacity = '1'; // Réinitialiser l'opacité pour la prochaine fois
+                            }
+                        }, 500);
+                    }
+                }, 3500); // 3.5 secondes
 
                 // Si l'ajout est réussi, vider le champ et mettre à jour l'interface
                 if (data.status === 'success') {
@@ -2072,20 +2138,52 @@ function initRemoveFriendForms() {
                 
                 if (data.status === 'success') {
                     const friendCard = form.closest('.friend-card');
-                    friendCard.classList.add('fade-out');
+                    
+                    // Ajouter un message visible avant de supprimer la carte
+                    statusDiv.textContent = data.message;
+                    statusDiv.className = `friend-form-message ${data.status}`;
+                    statusDiv.style.display = 'block'; // S'assurer qu'il est visible
+                    statusDiv.style.padding = '10px';  // Ajouter du padding
+                    statusDiv.style.margin = '10px 0'; // Ajouter de la marge
+                    statusDiv.style.background = data.status === 'success' ? 'rgba(46, 125, 50, 0.9)' : 'rgba(198, 40, 40, 0.9)';
+                    statusDiv.style.color = 'white';
+                    statusDiv.style.borderRadius = '4px';
+                    statusDiv.style.opacity = '1';
+                    
+                    // Afficher aussi une notification globale
+                    showDeletedFriendNotification(username);
+                    
+                    // Puis supprimer la carte après un court délai
                     setTimeout(() => {
-                        friendCard.remove();
-                        
-                        const countEl = document.querySelector('.friends-section h3 .stat-value');
-                        if (countEl) {
-                            const count = parseInt(countEl.textContent);
-                            countEl.textContent = count - 1;
-                        }
-                    }, 500);
+                        friendCard.classList.add('fade-out');
+                        setTimeout(() => {
+                            friendCard.remove();
+                            
+                            const countEl = document.querySelector('.friends-section h3 .stat-value');
+                            if (countEl) {
+                                const count = parseInt(countEl.textContent);
+                                countEl.textContent = count - 1;
+                            }
+                        }, 500);
+                    }, 1000); // Attendre 1 seconde pour que l'utilisateur puisse voir le message
                 }
                 
                 statusDiv.textContent = data.message;
                 statusDiv.className = `friend-form-message ${data.status}`;
+
+                setTimeout(() => {
+                    if (document.body.contains(statusDiv)) {
+                        statusDiv.style.transition = 'opacity 0.5s';
+                        statusDiv.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            if (document.body.contains(statusDiv)) {
+                                statusDiv.style.display = 'none';
+                                statusDiv.style.opacity = '1';
+                            }
+                        }, 500);
+                    }
+                }, 3500); 
                 
             } catch (error) {
                 console.error("Erreur lors de la suppression:", error);
