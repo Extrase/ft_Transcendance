@@ -56,10 +56,26 @@ services:
     ports:
       - "5432:5432" # Exposer le port PostgreSQL
 
+  redis:
+      image: redis:alpine
+      ports:
+        - "6380:6380"
+      command: redis-server --port 6380
+      networks:
+        - default
+      volumes:
+        - redis_data:/data
+      healthcheck:
+        test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
 volumes:
   postgres_data:
   static_volume:
   media_volume:
+  redis_data:
 
 networks:
   default:

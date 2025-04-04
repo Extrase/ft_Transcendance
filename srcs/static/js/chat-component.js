@@ -171,6 +171,10 @@ function initChatFunctionality() {
     window.acceptGameInvite = acceptGameInvite;
     window.rejectGameInvite = rejectGameInvite;
     window.createGameInviteModal = createGameInviteModal;
+
+    setTimeout(function() {
+        restoreActiveConversation();
+    }, 500); 
 }
 
 function ensureChatState() {
@@ -198,25 +202,30 @@ function initWebSocket() {
     }
 
     if (chatState.socket && chatState.socket.readyState === WebSocket.OPEN) {
+        console.log('WebSocket déjà connecté');
         return;
     }
     
     if (chatState.isConnecting) {
+        console.log('WebSocket déjà en cours de connexion');
         return;
     }
 
     chatState.isConnecting = true;
+    
+    // IMPORTANT: Utiliser le même hôte que la page web au lieu d'une URL codée en dur
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsPort = window.location.protocol === 'https:' ? '8443' : '8080';
-    const wsUrl = `${wsProtocol}//localhost:${wsPort}/ws/chat/`;
+    const wsHost = window.location.host; // Utiliser l'hôte actuel plutôt que "localhost:port"
+    const wsUrl = `${wsProtocol}//${wsHost}/ws/chat/`;
+    
     console.log('Tentative de connexion WebSocket à:', wsUrl);
     chatState.socket = new WebSocket(wsUrl);
-    // chatState.socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
     
     chatState.socket.onopen = function() {
-        console.log('WebSocket connecté');
+        console.log('WebSocket connecté avec succès');
         chatState.isConnecting = false;
         chatState.reconnectAttempts = 0; 
+        chatState.serverOffline = false;
         showSystemMessage('Connecté au chat');
     };
 
@@ -228,60 +237,93 @@ function initWebSocket() {
         
         if (chatState.reconnectAttempts >= chatState.maxReconnectAttempts) {
             chatState.serverOffline = true;
-            showSystemMessage('Le serveur semble être arrêté. Les tentatives de reconnexion ont été interrompues.');
             showServerOfflineAlert();
+            showSystemMessage('Impossible de se connecter au serveur après plusieurs tentatives');
             return;
         }
         
         showSystemMessage('Déconnecté du chat, tentative de reconnexion...');
-        setTimeout(initWebSocket, 1000);
+        console.log(`Tentative de reconnexion ${chatState.reconnectAttempts}/${chatState.maxReconnectAttempts}`);
+        setTimeout(initWebSocket, 2000);
     };
 
     chatState.socket.onmessage = function(e) {
         try {
+            console.log('Message WebSocket reçu (brut):', e.data);
             const data = JSON.parse(e.data);
-            console.log('Message WebSocket reçu:', data);
+            console.log('Message WebSocket parsé:', data);
             
-            // S'assurer que chatState existe avant de l'utiliser
+            // S'assurer que chatState existe
             const chatState = ensureChatState();
             
-            if (data.type === 'game_invite') {
-                console.log('Invitation de jeu reçue:', data);
-                if (typeof createGameInviteModal === 'function') {
-                    createGameInviteModal(data.sender, data.sender_id);
-                }
-            } else if (data.type === 'chat_message') {
-                // Vérifier si le message concerne la conversation actuellement affichée
-                const isRelevantMessage = (
-                    // C'est un message envoyé par nous à la personne que nous avons ouverte
-                    (data.is_sent === true && parseInt(data.recipient_id) === chatState.currentRecipient?.id) ||
-                    // OU c'est un message reçu de la personne avec qui nous discutons
-                    (data.is_sent !== true && parseInt(data.sender_id) === chatState.currentRecipient?.id)
+            // Traiter différents types de messages
+            if (data.type === 'chat_message') {
+                console.log('Message de chat reçu:', data);
+                
+                // Vérifier si le message provient de la conversation actuellement affichée
+                const isCurrentConversation = (
+                    chatState.currentRecipient && 
+                    parseInt(data.sender_id) === parseInt(chatState.currentRecipient.id)
                 );
                 
-                if (isRelevantMessage) {
-                    // Ajouter le message à la conversation active
-                    addMessageToChat(data);
+                // Si c'est la conversation actuelle, ajouter le message
+                if (isCurrentConversation) {
+                    addMessageToChat({
+                        content: data.message,
+                        sender: data.sender,
+                        timestamp: data.timestamp,
+                        is_sent: false
+                    });
                 } else {
-                    // Notification pour un message d'une autre conversation
+                    // Sinon, notifier d'un nouveau message
                     notifyNewMessage(data);
                 }
+            } 
+            else if (data.type === 'game_invite') {
+                console.log('Invitation de jeu reçue via WebSocket:', data);
+                // Forcer la fonction à être appelée dans le contexte global
+                window.createGameInviteModal(data.sender, data.sender_id);
+                
+                // Notification système si autorisée
+                if ("Notification" in window && Notification.permission === "granted") {
+                    const notification = new Notification("Invitation à jouer", {
+                        body: `${data.sender} vous invite à jouer !`,
+                        icon: "/static/images/game-icon.png"
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        this.close();
+                    };
+                }
+            }
+            else if (data.type === 'connection_established') {
+                console.log('Connexion WebSocket établie', data);
+            }
+            else if (data.type === 'message_sent') {
+                console.log('Message envoyé avec succès:', data);
+            }
+            else if (data.type === 'error') {
+                console.error('Erreur WebSocket:', data.message);
+                showSystemMessage(`Erreur: ${data.message}`);
+            }
+            else if (data.type === 'connection_response') {
+                console.log('Réponse de test de connexion:', data);
+                showSystemMessage('Connexion au serveur de chat établie');
+            }
+            else {
+                console.log('Type de message non géré:', data.type);
             }
         } catch (error) {
             console.error('Erreur lors du traitement du message WebSocket:', error);
+            console.log('Message brut:', e.data);
         }
     };
 
     chatState.socket.onerror = function(error) {
         console.error('Erreur WebSocket:', error);
         chatState.isConnecting = false;
-        
-        // Journaliser plus d'informations sur l'erreur
-        console.log('URL WebSocket:', chatState.socket.url);
-        console.log('État de la connexion:', chatState.socket.readyState);
-        
-        // Afficher un message d'erreur plus descriptif
-        showSystemMessage(`Erreur de connexion WebSocket. Vérifiez que le serveur est en cours d'exécution sur ${chatState.socket.url}`);
+        showSystemMessage('Erreur de connexion au serveur de chat');
     };
 }
 
@@ -318,96 +360,163 @@ async function checkServerAndConnect() {
 
 // Afficher des messages système
 function showSystemMessage(message) {
+    console.log("Message système:", message);
+    
+    // Vérifier si le conteneur de messages existe
     const messagesContainer = document.querySelector('.messages-container');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'system-message';
-    messageDiv.textContent = message;
-    messagesContainer.appendChild(messageDiv);
+    if (!messagesContainer) {
+        console.warn("Container de messages non trouvé, impossible d'afficher:", message);
+        return; // Sortir de la fonction si le conteneur n'existe pas
+    }
+    
+    // Créer le message système
+    const systemMessage = document.createElement('div');
+    systemMessage.className = 'message system';
+    systemMessage.textContent = message;
+    
+    // Ajouter au conteneur et faire défiler vers le bas
+    messagesContainer.appendChild(systemMessage);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Charger les messages pour un utilisateur spécifique
 async function loadUserMessages(userId) {
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+        // Ajouter un message de chargement
+        const loadingMessage = document.createElement('div');
+        loadingMessage.className = 'loading-message';
+        loadingMessage.textContent = 'Chargement des messages...';
+        messagesContainer.appendChild(loadingMessage);
+    }
+    if (!messagesContainer) {
+        console.error('Container de messages non trouvé');
+        return;
+    }
+    
+    // Vider le conteneur de messages
+    messagesContainer.innerHTML = '';
+    
     try {
+        // Essayer de charger les messages depuis le serveur
         const response = await fetch(`/chat/messages/${userId}/`);
-        if (!response.ok) throw new Error('Erreur lors du chargement des messages');
-        const messages = await response.json();
-        
-        const messagesContainer = document.querySelector('.messages-container');
-        messagesContainer.innerHTML = '';
-        messages.forEach(addMessageToChat);
+        if (response.ok) {
+            const messages = await response.json();
+            
+            // Si nous avons des messages du serveur, les afficher
+            if (messages && messages.length > 0) {
+                messages.forEach(msg => {
+                    addMessageToChat({
+                        content: msg.content,
+                        sender: msg.sender_username,
+                        timestamp: msg.timestamp,
+                        is_sent: msg.sender === window.chatState.currentUser
+                    });
+                });
+                
+                // Sauvegarder ces messages dans localStorage
+                saveMessagesToLocalStorage(userId, messages);
+            } else {
+                // Si aucun message du serveur, essayer de charger depuis localStorage
+                const savedMessages = loadMessagesFromLocalStorage(userId);
+                if (savedMessages && savedMessages.length > 0) {
+                    savedMessages.forEach(msg => {
+                        addMessageToChat(msg);
+                    });
+                }
+            }
+        } else {
+            console.error('Erreur lors du chargement des messages');
+            // En cas d'erreur, essayer de charger depuis localStorage
+            const savedMessages = loadMessagesFromLocalStorage(userId);
+            if (savedMessages && savedMessages.length > 0) {
+                savedMessages.forEach(msg => {
+                    addMessageToChat(msg);
+                });
+            }
+        }
     } catch (error) {
         console.error('Erreur:', error);
-        showSystemMessage('Erreur lors du chargement des messages');
+        // En cas d'erreur, essayer de charger depuis localStorage
+        const savedMessages = loadMessagesFromLocalStorage(userId);
+        if (savedMessages && savedMessages.length > 0) {
+            savedMessages.forEach(msg => {
+                addMessageToChat(msg);
+            });
+        }
     }
 }
 
 // Démarrer une conversation avec un utilisateur
 async function startChat(userId, username) {
-    // Vérifier si l'utilisateur est bloqué
-    const isBlocked = document.querySelector(`.blocked-list [data-user-id="${userId}"]`) !== null;
-    if (isBlocked) {
-        showSystemMessage('Impossible de démarrer une conversation avec un utilisateur bloqué');
-        return;
-    }
+    console.log(`Démarrage d'une conversation avec ${username} (ID: ${userId})`);
     
-    window.chatState.currentRecipient = { id: userId, username: username };
-    document.getElementById('recipient_id').value = userId;
+    // Mettre à jour l'utilisateur actuel
+    const chatState = ensureChatState();
+    chatState.currentRecipient = { id: userId, name: username };
     
-    // Mise à jour de l'interface
-    document.getElementById('no-chat-selected').style.display = 'none';
-    document.getElementById('chat-container').style.display = 'flex';
-    document.getElementById('chat-recipient-name').textContent = username;
+    // Sauvegarder la conversation active
+    saveActiveConversation(userId, username);
     
-    // Mise à jour visuelle de la sélection
-    document.querySelectorAll('.user-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    const userItem = document.querySelector(`.user-item[data-user-id="${userId}"]`);
-    if (userItem) {
-        userItem.classList.add('active');
-
-        // Supprimer l'indicateur de nouveau message quand on ouvre la conversation
-        userItem.classList.remove('has-new-message');
-
-        // Supprimer le compteur de messages
-        const counter = userItem.querySelector('.unread-count');
-        if (counter) {
-            counter.remove();
-        }
-    }
-    
-    // Activer/désactiver le formulaire de message selon le statut de blocage
-    const messageForm = document.getElementById('message-form');
-    const messageInput = messageForm.querySelector('input[name="content"]');
-    const sendButton = messageForm.querySelector('button[type="submit"]');
-    
-    // Vérifier si l'utilisateur nous a bloqués
-    const isBlockedByUser = Array.from(document.querySelectorAll('.user-item'))
-        .some(item => item.dataset.userId === userId && item.dataset.blockedBy === 'true');
-    
-    if (isBlockedByUser) {
-        messageInput.disabled = true;
-        sendButton.disabled = true;
-        showSystemMessage('Cet utilisateur vous a bloqué');
+    // Mettre à jour l'interface utilisateur - CORRIGER LES SÉLECTEURS
+    const chatRecipientName = document.getElementById('chat-recipient-name');
+    if (chatRecipientName) {
+        chatRecipientName.textContent = username;
     } else {
-        messageInput.disabled = false;
-        sendButton.disabled = false;
+        console.error("Élément #chat-recipient-name non trouvé");
     }
     
-    // Chargement des messages
+    // Masquer le message "aucune conversation" et afficher le conteneur de chat
+    const noChat = document.getElementById('no-chat-selected');
+    const chatContainer = document.getElementById('chat-container');
+    
+    if (noChat && chatContainer) {
+        noChat.style.display = 'none';
+        chatContainer.style.display = 'block';
+    } else {
+        console.error("Éléments de chat non trouvés");
+    }
+    
+    // Vider le conteneur de messages s'il existe
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+        messagesContainer.innerHTML = '';
+    }
+    
+    // Charger les messages depuis le serveur et/ou le localStorage
     await loadUserMessages(userId);
     
-    // Focus sur le champ de message si non désactivé
-    if (!messageInput.disabled) {
-        messageInput.focus();
+    // Rendre le formulaire actif si possible
+    const contentInput = document.querySelector('input[name="content"]');
+    if (contentInput) {
+        contentInput.focus();
     }
+    
+    // Marquer cet utilisateur comme actif dans la liste
+    const userItems = document.querySelectorAll('.user-item');
+    userItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.userId == userId) {
+            item.classList.add('active');
+            
+            // Réinitialiser l'indicateur de nouveau message et le compteur
+            item.classList.remove('has-new-message');
+            const counter = item.querySelector('.unread-count');
+            if (counter) {
+                counter.remove();
+            }
+        }
+    });
 }
 
 // Ajouter un message au chat
 function addMessageToChat(messageData) {
     const messagesContainer = document.querySelector('.messages-container');
+    if (!messagesContainer) {
+        console.error('Container de messages non trouvé');
+        return;
+    }
+    
     const messageDiv = document.createElement('div');
     
     // Identifier si c'est un message envoyé par nous (is_sent=true) ou reçu
@@ -431,10 +540,12 @@ function addMessageToChat(messageData) {
 
     messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
     
-    // Utiliser textContent au lieu d'innerHTML pour éviter les attaques XSS
+    // Le contenu peut être soit dans message soit dans content selon la source
+    const messageContent = messageData.message || messageData.content;
+    
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.textContent = messageData.message || messageData.content;
+    contentDiv.textContent = messageContent;
     
     const timestampSpan = document.createElement('span');
     timestampSpan.className = 'message-timestamp';
@@ -447,7 +558,95 @@ function addMessageToChat(messageData) {
     messageDiv.appendChild(timestampSpan);
     
     messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Faire défiler vers le bas
+    setTimeout(() => {
+        try {
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                console.log('Défilement vers le bas appliqué');
+            }
+        } catch (scrollError) {
+            console.error('Erreur lors du défilement:', scrollError);
+        }
+    }, 100); 
+    
+    // Sauvegarder le message dans localStorage si nous avons un destinataire actif
+    if (window.chatState && window.chatState.currentRecipient) {
+        const recipientId = window.chatState.currentRecipient.id;
+        const messages = loadMessagesFromLocalStorage(recipientId) || [];
+        
+        // Ajouter le nouveau message
+        messages.push({
+            content: messageContent,
+            sender: isSent ? window.chatState.currentUser : messageData.sender,
+            timestamp: timestamp.toISOString(),
+            is_sent: isSent
+        });
+        
+        // Limiter le nombre de messages sauvegardés (optionnel)
+        if (messages.length > 100) {
+            messages.shift(); // Supprimer le plus ancien message
+        }
+        
+        // Sauvegarder dans localStorage
+        saveMessagesToLocalStorage(recipientId, messages);
+    }
+}
+
+// Sauvegarder les messages dans le localStorage
+function saveMessagesToLocalStorage(recipientId, messages) {
+    try {
+        const chatKey = `chat_messages_${recipientId}`;
+        localStorage.setItem(chatKey, JSON.stringify(messages));
+        console.log(`Messages sauvegardés pour l'utilisateur ${recipientId}`);
+    } catch (error) {
+        console.error("Erreur lors de la sauvegarde des messages:", error);
+    }
+}
+
+// Charger les messages depuis le localStorage
+function loadMessagesFromLocalStorage(recipientId) {
+    try {
+        const chatKey = `chat_messages_${recipientId}`;
+        const savedMessages = localStorage.getItem(chatKey);
+        if (savedMessages) {
+            return JSON.parse(savedMessages);
+        }
+    } catch (error) {
+        console.error("Erreur lors du chargement des messages:", error);
+    }
+    return [];
+}
+
+// Sauvegarder la conversation active
+function saveActiveConversation(recipientId, recipientName) {
+    try {
+        localStorage.setItem('active_conversation', JSON.stringify({
+            id: recipientId,
+            name: recipientName
+        }));
+    } catch (error) {
+        console.error("Erreur lors de la sauvegarde de la conversation active:", error);
+    }
+}
+
+// Restaurer la conversation active au chargement de la page
+function restoreActiveConversation() {
+    try {
+        const activeConv = localStorage.getItem('active_conversation');
+        if (activeConv) {
+            const { id, name } = JSON.parse(activeConv);
+            if (id && name) {
+                console.log(`Restauration de la conversation avec ${name} (${id})`);
+                startChat(id, name);
+                return true;
+            }
+        }
+    } catch (error) {
+        console.error("Erreur lors de la restauration de la conversation active:", error);
+    }
+    return false;
 }
 
 // Notification de nouveaux messages
@@ -507,15 +706,45 @@ function notifyNewMessage(data) {
 async function handleMessageSubmit(e) {
     e.preventDefault();
     
-    if (!window.chatState.currentRecipient) {
+    if (!window.chatState || !window.chatState.currentRecipient) {
         showSystemMessage('Veuillez sélectionner un destinataire');
         return;
     }
 
     const content = this.querySelector('input[name="content"]').value.trim();
     if (!content) return;
+    
+    // Réinitialiser l'input immédiatement pour une meilleure UX
+    this.querySelector('input[name="content"]').value = '';
 
     try {
+        // Si WebSocket est disponible et connecté, l'utiliser en priorité
+        if (window.chatState.socket && window.chatState.socket.readyState === WebSocket.OPEN) {
+            console.log('Envoi du message via WebSocket');
+            
+            const messageData = {
+                type: 'chat_message',
+                message: content,
+                recipient_id: window.chatState.currentRecipient.id,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Envoyer le message via WebSocket
+            window.chatState.socket.send(JSON.stringify(messageData));
+            
+            // Afficher immédiatement le message dans notre interface
+            addMessageToChat({
+                content: content,
+                sender: window.chatState.currentUser,
+                timestamp: new Date().toISOString(),
+                is_sent: true
+            });
+            
+            return; // Sortir de la fonction après envoi WebSocket
+        }
+        
+        // Fallback vers l'API REST si WebSocket n'est pas disponible
+        console.log('WebSocket non disponible, utilisation de l\'API REST');
         const response = await fetch('/chat/send_message/', {
             method: 'POST',
             headers: {
@@ -529,34 +758,22 @@ async function handleMessageSubmit(e) {
         });
 
         if (response.ok) {
-            // IMPORTANT: Ajouter d'abord le message à l'interface locale
-            // pour que l'expéditeur puisse voir son propre message
-            addMessageToChat({
-                message: content,
-                is_sent: true,
-                sender: window.chatState.currentUser,
-                recipient_id: window.chatState.currentRecipient.id,
-                timestamp: new Date()
-            });
+            const data = await response.json();
             
-            // Ensuite essayer d'envoyer via WebSocket pour les notifications en temps réel
-            if (window.chatState.socket && window.chatState.socket.readyState === WebSocket.OPEN) {
-                window.chatState.socket.send(JSON.stringify({
-                    type: 'chat_message',
-                    message: content,
+            if (data.status === 'success') {
+                // Ajouter le message à l'interface
+                addMessageToChat({
+                    content: content,
                     sender: window.chatState.currentUser,
-                    recipient_id: window.chatState.currentRecipient.id,
-                    timestamp: new Date().toISOString()
-                }));
+                    timestamp: new Date().toISOString(),
+                    is_sent: true
+                });
             } else {
-                console.warn("WebSocket non connecté - impossible d'envoyer la notification en temps réel");
-                // Le message est déjà ajouté localement ci-dessus
+                showSystemMessage(data.message || 'Erreur lors de l\'envoi du message');
             }
-            
-            this.reset();
-            document.querySelector('input[name="content"]').focus();
         } else {
-            showSystemMessage('Erreur lors de l\'envoi du message');
+            const errorData = await response.json();
+            showSystemMessage(errorData.message || `Erreur (${response.status})`);
         }
     } catch (error) {
         console.error('Erreur:', error);
@@ -601,6 +818,14 @@ function sendGameInvite(userId, event) {
 
 // Créer une modal d'invitation à jouer
 function createGameInviteModal(sender, senderId) {
+    // Jouer un son pour notifier (optionnel)
+    try {
+        const audio = new Audio('/static/sounds/notification.mp3');
+        audio.play().catch(err => console.log('Son de notification non pris en charge'));
+    } catch (e) {
+        console.log('Son de notification non pris en charge');
+    }
+    
     // Supprimer tout modal existant pour éviter les doublons
     const existingModal = document.getElementById('gameInviteModal');
     if (existingModal) {
@@ -618,52 +843,96 @@ function createGameInviteModal(sender, senderId) {
             </div>
         </div>
     </div>`;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
     
-    // Ajouter les gestionnaires d'événements aux boutons
-    document.getElementById('acceptInviteBtn').addEventListener('click', () => acceptGameInvite(senderId));
-    document.getElementById('rejectInviteBtn').addEventListener('click', () => rejectGameInvite(senderId));
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Ajouter les gestionnaires d'événements aux boutons avec des fonctions anonymes
+    document.getElementById('acceptInviteBtn').addEventListener('click', function() {
+        console.log(`Acceptation de l'invitation de ${sender} (ID: ${senderId})`);
+        acceptGameInvite(senderId);
+    });
+    
+    document.getElementById('rejectInviteBtn').addEventListener('click', function() {
+        console.log(`Refus de l'invitation de ${sender} (ID: ${senderId})`);
+        rejectGameInvite(senderId);
+    });
+    
+    // Auto-fermeture après 30 secondes
+    setTimeout(function() {
+        const modal = document.getElementById('gameInviteModal');
+        if (modal) {
+            modal.remove();
+            // Notifier le serveur que l'invitation a expiré
+            rejectGameInvite(senderId);
+        }
+    }, 30000);
 }
 
 // Accepter une invitation à jouer
 async function acceptGameInvite(senderId) {
     try {
+        console.log(`Tentative d'acceptation de l'invitation de ${senderId}`);
+        
+        // Afficher un message de chargement dans la modal
+        const modalContent = document.querySelector('#gameInviteModal .modal-content');
+        if (modalContent) {
+            modalContent.innerHTML = '<p>Préparation du jeu...</p><div style="text-align:center;margin-top:20px;">Chargement...</div>';
+        }
+        
         const response = await fetch(`/chat/accept_game_invite/${senderId}/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
             }
         });
+        
         const data = await response.json();
+        console.log('Réponse du serveur:', data);
+        
         if (data.status === 'success') {
+            console.log('Redirection vers le jeu');
             window.location.href = `/chat/game/start/${senderId}/`;
+        } else {
+            throw new Error(data.message || 'Erreur lors de l\'acceptation');
         }
     } catch (error) {
-        console.error('Erreur:', error);
-        showSystemMessage('Erreur lors de l\'acceptation de l\'invitation');
-    } finally {
-        document.getElementById('gameInviteModal').remove();
+        console.error('Erreur lors de l\'acceptation:', error);
+        showSystemMessage('Erreur lors de l\'acceptation: ' + error.message);
+        
+        // Fermer la modal en cas d'erreur
+        const modal = document.getElementById('gameInviteModal');
+        if (modal) modal.remove();
     }
 }
 
 // Refuser une invitation à jouer
 async function rejectGameInvite(senderId) {
     try {
+        console.log(`Refus de l'invitation de ${senderId}`);
+        
         const response = await fetch(`/chat/reject_game_invite/${senderId}/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
             }
         });
+        
         const data = await response.json();
+        console.log('Réponse du serveur:', data);
+        
         if (data.status === 'success') {
             showSystemMessage('Invitation refusée');
+        } else {
+            console.error('Erreur lors du refus:', data.message);
         }
     } catch (error) {
-        console.error('Erreur:', error);
-        showSystemMessage('Erreur lors du refus de l\'invitation');
+        console.error('Erreur lors du refus:', error);
     } finally {
-        document.getElementById('gameInviteModal').remove();
+        // Toujours fermer la modal
+        const modal = document.getElementById('gameInviteModal');
+        if (modal) modal.remove();
     }
 }
 
