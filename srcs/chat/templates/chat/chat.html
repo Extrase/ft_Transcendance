@@ -1,0 +1,888 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="chat-interface">
+    <!-- Liste des utilisateurs à gauche -->
+    <div class="users-sidebar">
+        <h3>Utilisateurs</h3>
+        <div class="users-list">
+            {% for user in users %}
+            <div class="user-item" data-user-id="{{ user.id }}" 
+                data-blocked-by="{% if user in blocked_by_users %}true{% else %}false{% endif %}">
+                <div class="user-info" onclick="startChat({{ user.id }}, '{{ user.username }}')">
+                    <span class="username">{{ user.username }}</span>
+                </div>
+                <div class="user-actions">
+                    {% if user not in blocked_by_users %}
+                        <button type="button" class="btn btn-primary btn-sm btn-invite" 
+                                onclick="sendGameInvite({{ user.id }})">Inviter</button>
+                        <button type="button" class="btn btn-danger btn-sm btn-block" 
+                                onclick="blockUser({{ user.id }})">Bloquer</button>
+                    {% else %}
+                        <span class="blocked-status">Vous êtes bloqué</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="blocked-section">
+            <h3>Utilisateurs bloqués</h3>
+            <div class="blocked-list">
+                {% for user in blocked_users %}
+                <div class="user-item" data-user-id="{{ user.id }}">
+                    <div class="user-info">
+                        <span class="username">{{ user.username }}</span>
+                    </div>
+                    <div class="user-actions">
+                        <button type="button" class="btn btn-secondary btn-sm btn-unblock" onclick="unblockUser({{ user.id }})">Débloquer</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Zone de chat -->
+    <div class="chat-area">
+        <div id="no-chat-selected" class="no-chat-message">
+            Cliquez sur un utilisateur pour commencer une conversation
+        </div>
+
+        <div id="chat-container" class="chat-container" style="display: none;">
+            <div class="chat-header">
+                <span id="chat-recipient-name"></span>
+            </div>
+            
+            <div class="messages-container">
+
+            </div>
+
+            <form id="message-form" class="message-form">
+                {% csrf_token %}
+                <input type="text" name="content" class="form-control" placeholder="Écrivez votre message..." required>
+                <input type="hidden" name="recipient_id" id="recipient_id">
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de l'état global de l'application
+const chatState = {
+    socket: null,
+    currentUser: '{{ request.user.username }}',
+    currentRecipient: null,
+    isConnecting: false,
+};
+
+chatState.reconnectAttempts = 0;
+chatState.maxReconnectAttempts = 3; // Nombre limité de tentatives avant de considérer le serveur comme arrêté
+chatState.serverOffline = false;
+
+function createGameInviteModal(sender, senderId) {
+    const modalHtml = `
+        <div id="gameInviteModal" class="modal" style="display: block; background-color: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;">
+            <div class="modal-content" style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 80%; max-width: 400px;">
+                <h3>Invitation à jouer</h3>
+                <p>${sender} vous invite à jouer !</p>
+                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                    <button onclick="acceptGameInvite(${senderId})" class="btn btn-success">Accepter</button>
+                    <button onclick="rejectGameInvite(${senderId})" class="btn btn-danger">Refuser</button>
+                </div>
+            </div>
+        </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Système de gestion des WebSocket avec reconnexion automatique
+function initWebSocket()
+{
+    if (chatState.serverOffline) {
+        showSystemMessage('Le serveur semble être arrêté. Veuillez rafraîchir la page quand le serveur sera disponible.');
+        return;
+    }
+
+    if (chatState.socket && chatState.socket.readyState === WebSocket.OPEN) {
+        return;
+    }
+    
+    if (chatState.isConnecting) {
+        return;
+    }
+
+    chatState.isConnecting = true;
+    chatState.socket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+    
+    chatState.socket.onopen = function() {
+        console.log('WebSocket connecté');
+        chatState.isConnecting = false;
+        chatState.reconnectAttempts = 0; // Réinitialiser le compteur
+        showSystemMessage('Connecté au chat');
+    };
+
+    chatState.socket.onclose = function(e) {
+        console.log('WebSocket déconnecté, code:', e.code);
+        chatState.isConnecting = false;
+        
+        // Incrémenter le compteur de tentatives
+        chatState.reconnectAttempts++;
+        
+        // Vérifier si on a atteint le nombre maximum de tentatives
+        if (chatState.reconnectAttempts >= chatState.maxReconnectAttempts) {
+            chatState.serverOffline = true;
+            showSystemMessage('Le serveur semble être arrêté. Les tentatives de reconnexion ont été interrompues.');
+            // Ajouter une bannière visible pour indiquer que le serveur est arrêté
+            showServerOfflineAlert();
+            return;
+        }
+        
+        showSystemMessage('Déconnecté du chat, tentative de reconnexion...');
+        setTimeout(initWebSocket, 1000);
+    };
+
+    chatState.socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log('Message WebSocket reçu:', data);
+        
+        if (data.type === 'game_invite') {
+            console.log('Invitation de jeu reçue:', data);
+            createGameInviteModal(data.sender, data.sender_id);
+        } else if (data.type === 'chat_message') {
+            // Vérifier si le message concerne la conversation actuellement affichée
+            const isRelevantMessage = (
+                // C'est un message envoyé par nous à la personne que nous avons ouverte
+                (data.is_sent === true && parseInt(data.recipient_id) === chatState.currentRecipient?.id) ||
+                // OU c'est un message reçu de la personne avec qui nous discutons
+                (data.is_sent !== true && parseInt(data.sender_id) === chatState.currentRecipient?.id)
+            );
+            
+            if (isRelevantMessage) {
+                // Ajouter le message à la conversation active
+                addMessageToChat(data);
+            } else {
+                // Notification pour un message d'une autre conversation
+                notifyNewMessage(data);
+            }
+        }
+    };
+
+    chatState.socket.onerror = function(error) {
+        console.error('Erreur WebSocket:', error);
+        chatState.isConnecting = false;
+    };
+}
+
+// Affichage des messages système
+function showSystemMessage(message) {
+    const messagesContainer = document.querySelector('.messages-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'system-message';
+    messageDiv.textContent = message;
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Chargement des messages pour un utilisateur spécifique
+async function loadUserMessages(userId) {
+    try {
+        const response = await fetch(`/chat/messages/${userId}/`);
+        if (!response.ok) throw new Error('Erreur lors du chargement des messages');
+        const messages = await response.json();
+        
+        const messagesContainer = document.querySelector('.messages-container');
+        messagesContainer.innerHTML = '';
+        messages.forEach(addMessageToChat);
+    } catch (error) {
+        console.error('Erreur:', error);
+        showSystemMessage('Erreur lors du chargement des messages');
+    }
+}
+
+async function startChat(userId, username) {
+    // Vérifier si l'utilisateur est bloqué
+    const isBlocked = document.querySelector(`.blocked-list [data-user-id="${userId}"]`) !== null;
+    if (isBlocked) {
+        showSystemMessage('Impossible de démarrer une conversation avec un utilisateur bloqué');
+        return;
+    }
+    
+    chatState.currentRecipient = { id: userId, username: username };
+    document.getElementById('recipient_id').value = userId;
+    
+    // Mise à jour de l'interface
+    document.getElementById('no-chat-selected').style.display = 'none';
+    document.getElementById('chat-container').style.display = 'flex';
+    document.getElementById('chat-recipient-name').textContent = username;
+    
+    // Mise à jour visuelle de la sélection
+    document.querySelectorAll('.user-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const userItem = document.querySelector(`.user-item[data-user-id="${userId}"]`);
+    if (userItem) {
+        userItem.classList.add('active');
+    }
+    
+    // Activer/désactiver le formulaire de message selon le statut de blocage
+    const messageForm = document.getElementById('message-form');
+    const messageInput = messageForm.querySelector('input[name="content"]');
+    const sendButton = messageForm.querySelector('button[type="submit"]');
+    
+    // Vérifier si l'utilisateur nous a bloqués
+    const isBlockedByUser = Array.from(document.querySelectorAll('.user-item'))
+        .some(item => item.dataset.userId === userId && item.dataset.blockedBy === 'true');
+    
+    if (isBlockedByUser) {
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        showSystemMessage('Cet utilisateur vous a bloqué');
+    } else {
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+    }
+    
+    // Chargement des messages
+    await loadUserMessages(userId);
+    
+    // Focus sur le champ de message si non désactivé
+    if (!messageInput.disabled) {
+        messageInput.focus();
+    }
+}
+
+function addMessageToChat(messageData) {
+    const messagesContainer = document.querySelector('.messages-container');
+    const messageDiv = document.createElement('div');
+    
+    // Identifier si c'est un message envoyé par nous (is_sent=true) ou reçu
+    const isSent = messageData.is_sent === true || messageData.sender === chatState.currentUser;
+    
+    // Formatage de la date
+    let timestamp;
+    if (messageData.timestamp) {
+        // Si c'est une chaîne ISO, on la parse
+        if (typeof messageData.timestamp === 'string') {
+            timestamp = new Date(messageData.timestamp);
+        } 
+        // Si c'est déjà un objet Date
+        else if (messageData.timestamp instanceof Date) {
+            timestamp = messageData.timestamp;
+        }
+    } else {
+        // Si pas de timestamp, on utilise la date actuelle
+        timestamp = new Date();
+    }
+
+    messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+    
+    // Utiliser textContent au lieu d'innerHTML pour éviter les attaques XSS
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = messageData.message || messageData.content;
+    
+    const timestampSpan = document.createElement('span');
+    timestampSpan.className = 'message-timestamp';
+    timestampSpan.textContent = timestamp.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    messageDiv.appendChild(contentDiv);
+    messageDiv.appendChild(timestampSpan);
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Fonction pour notifier l'utilisateur d'un nouveau message
+function notifyNewMessage(data) {
+    // Identifiez l'expéditeur du message
+    const senderId = parseInt(data.sender_id);
+    const senderName = data.sender;
+    
+    // Éviter de notifier pour nos propres messages
+    if (data.is_sent === true) {
+        return;
+    }
+    
+    // Trouver l'élément utilisateur dans la liste
+    const userElement = document.querySelector(`.user-item[data-user-id="${senderId}"]`);
+    
+    if (userElement) {
+        // Ajouter une classe pour indiquer un nouveau message
+        userElement.classList.add('has-new-message');
+        
+        // Optionnellement, demander la permission et afficher une notification système
+        if ("Notification" in window) {
+            if (Notification.permission === "granted") {
+                new Notification(`Nouveau message de ${senderName}`, {
+                    body: data.message.substring(0, 60) + (data.message.length > 60 ? '...' : '')
+                });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        }
+    }
+}
+
+function sendGameInvite(userId) {
+    const button = event.target;
+    button.disabled = true;
+    
+    const recipientName = document.querySelector(`[data-user-id="${userId}"] .username`).textContent;
+    
+    fetch(`/chat/send_game_invite/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSystemMessage(`Invitation au jeu envoyée à ${recipientName}`);
+            button.textContent = 'Invité';
+            setTimeout(() => {
+                button.textContent = 'Inviter';
+                button.disabled = false;
+            }, 3000);
+        } else {
+            showSystemMessage(data.message || 'Erreur lors de l\'envoi de l\'invitation');
+            button.disabled = false;
+            button.textContent = 'Inviter';
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        button.disabled = false;
+        showSystemMessage('Erreur lors de l\'envoi de l\'invitation');
+    });
+}
+
+async function acceptGameInvite(senderId) {
+    try {
+        const response = await fetch(`/chat/accept_game_invite/${senderId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            window.location.href = `/chat/game/start/${senderId}/`;
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        showSystemMessage('Erreur lors de l\'acceptation de l\'invitation');
+    } finally {
+        document.getElementById('gameInviteModal').remove();
+    }
+}
+
+async function rejectGameInvite(senderId) {
+    try {
+        const response = await fetch(`/chat/reject_game_invite/${senderId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            showSystemMessage('Invitation refusée');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        showSystemMessage('Erreur lors du refus de l\'invitation');
+    } finally {
+        document.getElementById('gameInviteModal').remove();
+    }
+}
+
+function blockUser(userId) {
+    if (!confirm('Voulez-vous vraiment bloquer cet utilisateur ?')) return;
+    
+    const button = event.target;
+    button.disabled = true;
+    
+    fetch(`/chat/block_user/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSystemMessage('Utilisateur bloqué');
+            window.location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        button.disabled = false;
+        showSystemMessage('Erreur lors du blocage de l\'utilisateur');
+    });
+}
+
+function unblockUser(userId) {
+    if (!confirm('Voulez-vous vraiment débloquer cet utilisateur ?')) return;
+    
+    const button = event.target;
+    button.disabled = true;
+    
+    fetch(`/chat/unblock_user/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Vider le conteneur de messages si c'est l'utilisateur actuel
+            if (chatState.currentRecipient && chatState.currentRecipient.id === userId) {
+                const messagesContainer = document.querySelector('.messages-container');
+                if (messagesContainer) {
+                    messagesContainer.innerHTML = '';
+                }
+            }
+            showSystemMessage('Utilisateur débloqué');
+            // Recharger la page après un court délai
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            showSystemMessage('Erreur lors du déblocage de l\'utilisateur');
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        button.disabled = false;
+        showSystemMessage('Erreur lors du déblocage de l\'utilisateur');
+    });
+}
+
+function showServerOfflineAlert() {
+    // Créer une bannière d'alerte en haut de la page
+    const offlineAlert = document.createElement('div');
+    offlineAlert.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; background-color: #ff4d4d; color: white; 
+                    padding: 15px; text-align: center; z-index: 9999; font-weight: bold;">
+            Le serveur est actuellement indisponible. Veuillez rafraîchir la page quand le serveur sera de nouveau opérationnel.
+            <button onclick="window.location.reload()" style="margin-left: 15px; padding: 5px 10px; 
+                     background: white; color: #ff4d4d; border: none; border-radius: 4px; cursor: pointer;">
+                Rafraîchir
+            </button>
+        </div>
+    `;
+    document.body.prepend(offlineAlert);
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    initWebSocket();
+    
+    // Gestionnaire de soumission du formulaire
+    document.getElementById('message-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!chatState.currentRecipient) {
+            showSystemMessage('Veuillez sélectionner un destinataire');
+            return;
+        }
+
+        const content = this.querySelector('input[name="content"]').value.trim();
+        if (!content) return;
+
+        try {
+            const response = await fetch('/chat/send_message/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content: content,
+                    recipient_id: chatState.currentRecipient.id
+                })
+            });
+
+            if (response.ok) {
+                const timestamp = new Date();
+                chatState.socket.send(JSON.stringify({
+                    type: 'chat_message',
+                    message: content,
+                    sender: chatState.currentUser,
+                    recipient_id: chatState.currentRecipient.id,
+                    timestamp: timestamp.toISOString()
+                }));
+                
+                this.reset();
+                document.querySelector('input[name="content"]').focus();
+            } else {
+                showSystemMessage('Erreur lors de l\'envoi du message');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showSystemMessage('Erreur de connexion');
+        }
+    });
+});
+
+document.addEventListener('visibilitychange', function() {
+    // Si l'utilisateur revient sur l'onglet et que le serveur était considéré comme hors ligne
+    if (!document.hidden && chatState.serverOffline) {
+        // Tester si le serveur est de nouveau disponible
+        fetch(window.location.href, { method: 'HEAD' })
+            .then(() => {
+                // Le serveur répond, on peut réinitialiser et tenter de se reconnecter
+                chatState.serverOffline = false;
+                chatState.reconnectAttempts = 0;
+                initWebSocket();
+                // Supprimer la bannière d'alerte si elle existe
+                const alert = document.querySelector('[style*="position: fixed; top: 0;"]');
+                if (alert) alert.remove();
+            })
+            .catch(() => {
+                // Le serveur est toujours indisponible
+                console.log("Le serveur est toujours indisponible");
+            });
+    }
+});
+</script>
+
+<style>
+    /* Ajout de la police Inter depuis Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    /* Structure principale */
+    .chat-interface {
+        display: flex;
+        height: 90vh;
+        margin: 20px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    /* Sidebar */
+    .users-sidebar {
+        width: 320px;
+        background: #ffffff;
+        border-right: 1px solid #eaeaea;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .users-sidebar h3 {
+        padding: 20px;
+        margin: 0;
+        color: #1a1a1a;
+        font-size: 18px;
+        font-weight: 600;
+        background: #ffffff;
+        border-bottom: 1px solid #eaeaea;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Liste des utilisateurs */
+    .users-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .user-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 15px;
+        border-bottom: 1px solid #f5f5f5;
+        transition: all 0.2s ease;
+        gap: 10px;
+    }
+
+    .user-item:hover {
+        background: #f8f9fa;
+    }
+
+    .user-item.active {
+        background: #f0f7ff;
+        border-left: 4px solid #0066ff;
+    }
+
+    .user-info {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .username {
+        font-size: 15px;
+        color: #2c2c2c;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* Boutons */
+    .btn-invite, .btn-block, .btn-unblock {
+        padding: 4px 8px;
+        border-radius: 16px;
+        border: none;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .btn-invite {
+        background: #0066ff;
+        color: white;
+    }
+
+    .btn-invite:hover {
+        background: #0052cc;
+    }
+
+    .btn-block {
+        background: #ff4d4d;
+        color: white;
+    }
+
+    .btn-block:hover {
+        background: #e60000;
+    }
+
+    .btn-unblock {
+        background: #666666;
+        color: white;
+    }
+
+    .btn-unblock:hover {
+        background: #4d4d4d;
+    }
+
+    /* Zone de chat */
+    .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+    }
+
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #ffffff;
+    }
+
+    .chat-header {
+        padding: 20px;
+        background: #ffffff;
+        border-bottom: 1px solid #eaeaea;
+        color: #1a1a1a;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .messages-container {
+        flex: 1;
+        padding: 24px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        background: #f8f9fa;
+    }
+
+    /* Messages */
+    .message {
+        max-width: 70%;
+        margin-bottom: 12px;
+        padding: 12px 16px;
+        position: relative;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .message.sent {
+        align-self: flex-end;
+        background: #0066ff;
+        color: white;
+        margin-left: 40px;
+    }
+
+    .message.received {
+        align-self: flex-start;
+        background: #ffffff;
+        margin-right: 40px;
+    }
+
+    .message-content {
+        font-size: 14px;
+        line-height: 1.5;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .message.sent .message-content {
+        color: white;
+    }
+
+    .message.received .message-content {
+        color: #1a1a1a;
+    }
+
+    .message-timestamp {
+        font-size: 11px;
+        margin-top: 4px;
+        opacity: 0.8;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .message.sent .message-timestamp {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .message.received .message-timestamp {
+        color: #666666;
+    }
+
+    /* Formulaire de message */
+    #message-form {
+        padding: 16px 24px;
+        background: #ffffff;
+        border-top: 1px solid #eaeaea;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    #message-form input {
+        flex: 1;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border: 1px solid #eaeaea;
+        border-radius: 24px;
+        font-size: 15px;
+        transition: all 0.2s ease;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    #message-form input:focus {
+        outline: none;
+        border-color: #0066ff;
+        background: #ffffff;
+    }
+
+    #message-form button {
+        padding: 12px 24px;
+        border-radius: 24px;
+        background: #0066ff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    #message-form button:hover {
+        background: #0052cc;
+    }
+
+    /* Message système */
+    .system-message {
+        align-self: center;
+        background: rgba(0, 0, 0, 0.05);
+        padding: 8px 16px;
+        border-radius: 16px;
+        font-size: 12px;
+        color: #666666;
+        margin: 8px 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Section utilisateurs bloqués */
+    .blocked-section {
+        margin-top: auto;
+        border-top: 1px solid #eaeaea;
+        background: #f8f9fa;
+    }
+
+    .blocked-section h3 {
+        padding: 16px 20px;
+        color: #666666;
+        font-size: 14px;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .blocked-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    /* Message d'accueil */
+    .no-chat-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #666666;
+        font-size: 16px;
+        text-align: center;
+        padding: 20px;
+    }
+
+    /* Ajustement des tailles de police pour une meilleure lisibilité */
+    .message-content {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .message-timestamp {
+        font-size: 11px;
+    }
+
+    .username {
+        font-size: 14px;
+    }
+
+    .system-message {
+        font-size: 12px;
+    }
+
+    /* Ajustement du poids des polices */
+    .chat-header {
+        font-weight: 600;
+    }
+
+    .btn-invite, .btn-block, .btn-unblock {
+        font-weight: 500;
+    }
+
+    #message-form input::placeholder {
+        font-weight: 400;
+        color: #999;
+    }
+</style>
+{% endblock %}

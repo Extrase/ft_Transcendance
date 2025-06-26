@@ -1,0 +1,13 @@
+<!-- chat/profile.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="profile-container">
+    <h2>{{ profile.user.username }}</h2>
+    <div class="profile-info">
+        <p>Statut : {{ profile.status }}</p>
+    </div>
+    <a href="{% url 'chat:chat' %}" class="btn btn-primary">Retour au chat</a>
+</div>
+{% endblock %}

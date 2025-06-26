@@ -1,0 +1,93 @@
+{
+    "nav": {
+        "home": "Inicio",
+        "pong": "Pong",
+        "pong_improved": "Pong Mejorado",
+        "bomberman": "Bomberman",
+        "login": "Iniciar sesión",
+        "logout": "Cerrar sesión",
+        "language": "EN/ES",
+        "signup": "Registrarse"
+    },
+    "login": {
+        "title": "Iniciar sesión",
+        "username": "Nombre de usuario",
+        "password": "Contraseña",
+        "submit": "Iniciar sesión",
+        "no_account": "¿No tienes cuenta?",
+        "signup_link": "Regístrate aquí",
+        "connect_42": "Conectar con 42:",
+        "connect_here": "¡Inicia sesión aquí!"
+    },
+    "signup": {
+        "title": "Registro",
+        "username": "Nombre de usuario",
+        "email": "Correo electrónico",
+        "profile_photo": "Foto de perfil",
+        "first_name": "Nombre",
+        "last_name": "Apellido",
+        "password": "Contraseña",
+        "confirm_password": "Confirmar contraseña",
+        "submit": "Registrarse",
+        "have_account": "¿Ya tienes cuenta?",
+        "login_link": "Inicia sesión aquí"
+    },
+    "profile": {
+        "notifications": "Notificaciones",
+        "recent_activity": "Actividad reciente",
+        "last_played": "Último juego",
+        "time_played": "Tiempo jugado",
+        "customize_colors": "Personalizar colores",
+        "change_password": "Cambiar contraseña",
+        "games_played": "Partidas jugadas",
+        "win_rate": "Tasa de victorias",
+        "total_score": "Puntuación total",
+        "recent_achievements": "Logros recientes",
+        "my_friends": "Mis amigos",
+        "start_color": "Color inicial:",
+        "end_color": "Color final:",
+        "apply": "Aplicar",
+        "cancel": "Cancelar",
+        "last_games": "Últimas partes",
+        "change_profile": "Modificar perfil"
+    },
+    "password_change": {
+    "title": "Cambiar contraseña",
+    "old_password": "Contraseña antigua",
+    "new_password": "Nueva contraseña",
+    "confirm_password": "Confirmar contraseña",
+    "submit": "Cambiar contraseña",
+    "old_placeholder": "Introduce tu contraseña actual",
+    "new_placeholder": "Introduce una nueva contraseña",
+    "confirm_placeholder": "Confirma la nueva contraseña",
+    "success": {
+      "title": "Contraseña cambiada con éxito",
+      "message": "Tu contraseña ha sido actualizada con éxito.",
+      "return_link": "Volver al perfil"
+    }
+  },
+    "home": {
+    "welcome": "Bienvenido/a",
+    "games_played": "Has jugado",
+    "games_achieved": "partidas con una tasa de victoria de",
+    "view_profile": "Ver tu perfil",
+    "featured_games": "Juegos populares",
+    "play_now": "Jugar ahora",
+    "recent_activity": "Actividad reciente",
+    "login_prompt": "Inicia sesión para acceder a todas las funcionalidades"
+  },
+  "update":{
+    "update_profile": "Modificación del Perfil",
+    "username":"Nombre de usuario:",
+    "email": "Correo electrónico:",
+    "photo": "Foto de Perfil:",
+    "first_name": "Nombre:",
+    "last_name": "Apellido:",
+    "updated": "Actualizar" 
+  },
+  "languages": {
+    "english": "Inglés",
+    "french": "Francés",
+    "spanish": "Español"
+  }
+}

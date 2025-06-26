@@ -1,0 +1,69 @@
+<main>
+    <h1 id="title">PONG</h1>
+
+    <script type="module" src="pong.js"></script>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div class="boxInsert">
+        <button id="menuLink" class="insertCoin" aria-pressed="false">INSERT COIN</button>
+        <footer>
+            <p class="controlMenu" id="firstInstruct">Press button to Start</p>
+        </footer>
+    </div>
+
+    <!-- MENU PRINCIPAL -->
+    <nav id="menu" aria-label="Main Menu" class="hidden">
+        <ul>
+            <li><button id="pButton" class="button">PLAY</button></li>
+            <li><button id="sButton" class="button">SETTING</button></li>
+            <li><button id="iButton" class="button">INFO</button></li>
+            <li><button id="qButton" class="button">QUIT</button></li>
+        </ul>
+    </nav>
+
+    <footer>
+        <p class="controlMenu hidden" id="secondInstruct">Use ↑ and ↓ to navigate, press Space to select</p>
+    </footer>
+
+    <!-- MENU MODE DE JEU -->
+    <nav id="menuMode" aria-label="Mode Menu" class="hidden">
+        <ul>
+            <li><button id="siButton" class="button">SINGLE</button></li>
+            <li><button id="muButton" class="button">MULTI</button></li>
+            <li><button id="qmButton" class="button">QUIT</button></li>
+        </ul>
+    </nav>
+
+    <!-- MENU DIFFICULTÉ -->
+    <nav id="menuDifficulty" aria-label="Difficulty Menu" class="hidden">
+        <ul>
+            <li><button id="esButton" class="button">EASY</button></li>
+            <li><button id="mdButton" class="button">MEDIUM</button></li>
+            <li><button id="hdButton" class="button">HARD</button></li>
+            <li><button id="qdButton" class="button">QUIT</button></li>
+        </ul>
+    </nav>
+
+    <!-- INFO -->
+    <nav id="menuInfo" aria-label="Info Bubble" class="hidden">
+        <p><strong>PONG - 1972</strong></p>
+        <p id="info1"></p>
+        <ul>
+            <li><button id="moreBubble" class="button">More Info</button></li>
+            <li><button id="closeBubble" class="button">Close</button></li>
+        </ul>
+    </nav>
+
+    <!-- STATISTIQUES DU JEU -->
+    <div id="gameStats" class="hidden">
+        <h2>Statistiques du jeu</h2>
+        <p>Parties jouées : <span id="totalGames">0</span></p>
+        <p>Score total : Joueur <span id="totalPlayerScore">0</span> - Ordinateur <span id="totalComputerScore">0</span></p>
+        <p>Taux de victoires : <span id="winRatio">0%</span></p>
+        <p>Parties parfaites : Joueur <span id="perfectPlayer">0</span> - Ordinateur <span id="perfectComputer">0</span></p>
+        <p>Dernières parties :</p>
+        <ul id="lastGames"></ul>
+    </div>
+    
+</main>
